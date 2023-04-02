@@ -3,7 +3,6 @@
 import pandas as pd
 from sqlalchemy import create_engine
 
-
 # You will primarily work with the global variables here
 MYSQL_HOST = "localhost"
 MYSQL_DATABASE = "midsun_dev_db_mock"
