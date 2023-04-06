@@ -1,9 +1,16 @@
 const express = require("express");
 const app = express();
 const port = 3000;
-const http = require("http").createServer();
+const http = require("http");
+const server = http.createServer(app);
 
-const io = require("socket.io")(http);
+app.get("/", (req, res) => {
+  res.send("<h1>Hello world</h1>");
+});
+
+const { Server } = require("socket.io");
+
+const io = new Server(server);
 
 // listening for connection to clients
 io.on("connection", (socket) => {
@@ -11,6 +18,6 @@ io.on("connection", (socket) => {
   console.log("let's goo");
 });
 
-http.listen(port, () => {
+server.listen(port, () => {
   console.log("server is listening on localhost" + port);
 });

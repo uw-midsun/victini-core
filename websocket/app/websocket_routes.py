@@ -7,25 +7,17 @@ import pandas as pd
 import plotly
 import plotly.graph_objects as go
 import csv
-import socketio
 
 
 app = Quart(__name__)
 csv_dir = "./sample_route_step4.csv"
 
-sio = socketio.AsyncClient()
 
-
-@sio.event
-async def connect():
-    print('I received a message!')
-
-async def main():
-    await sio.connect('http://localhost:3000')
-    await sio.wait()
 
 @app.websocket("/trip_elevation")
 async def update_graph_scatter_elevation():
+    datas = await websocket.receive()
+    print(datas)
     data = json.dumps(update_graph_scatter("trip_elevation.csv", "trip(m)", "elevation(m)"))
     print(type(data))
     await websocket.send(data)
@@ -68,6 +60,6 @@ def update_graph_scatter(name, x_axis, y_axis):
     return data
 
 
+
 if __name__ == "__main__":
     app.run(port=5000)
-    asyncio.run(main())
