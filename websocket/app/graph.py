@@ -57,7 +57,9 @@ def init_dash_app(server):
 
     @app.callback(Output(TRIP_DISTANCE_ID, 'figure'), [Input(UPDATE_TRIP_DISTANCE, 'message')])
     def listening_for_update_distance(message):
-        data = update_graph(message)
+        print(message)
+        # data = update_graph(message)
+        data = message
         return data
 
     @app.callback(Output(TRIP_LATITUDE_ID, 'figure'), [Input(UPDATE_TRIP_LATITUDE, 'message')])

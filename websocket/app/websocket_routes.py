@@ -12,25 +12,58 @@ import csv
 app = Quart(__name__)
 csv_dir = "./sample_route_step4.csv"
 
+DATA = ""
+DATA_IS_READY = True
+
+@app.websocket("/test")
+async def test():
+    global DATA
+    global DATA_IS_READY
+    msg = await websocket.receive()
+    print(msg)
+    # msg = "hello"
+    DATA = msg
+    DATA_IS_READY = True
 
 
 @app.websocket("/trip_elevation")
 async def update_graph_scatter_elevation():
-    datas = await websocket.receive()
-    print(datas)
+    # await websocket.accept()
+    # while True:
+    #     output = json.dumps([random.randint(200, 1000) for _ in range(6)])
+
+    # datas = await websocket.receive()
+    # print(datas)
     data = json.dumps(update_graph_scatter("trip_elevation.csv", "trip(m)", "elevation(m)"))
-    print(type(data))
+    # print(type(json.dumps(datas)))
+    # await websocket.send(json.dumps(datas))
     await websocket.send(data)
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
 
 
 @app.websocket("/trip_distance")
 async def update_graph_scatter_distance():
-    data = await websocket.receive()
-    print(data)
-    data = json.dumps(update_graph_scatter("trip_distance.csv", "trip(m)", "dist_to_next_coordinate(m)"))
-    await websocket.send(data)
-    await asyncio.sleep(5)
+    # data = json.dumps(update_graph_scatter("trip_distance.csv", "trip(m)", "dist_to_next_coordinate(m)"))
+    # await websocket.send(data)
+    # await asyncio.sleep(5)
+    # while True:
+    global DATA
+    global DATA_IS_READY
+
+    while True:
+        msg = "hello"
+        await websocket.send(DATA)
+        DATA_IS_READY = False
+        await asyncio.sleep(10)
+
+    # data = await websocket.receive()
+    # print("test" + data)
+    # data = "hello"
+    # print(data)
+    # # output = json.dumps([random.randint(200, 1000) for _ in range(6)])
+    # await websocket.send(data)
+        # await asyncio.sleep(5)
+
 
 @app.websocket("/trip_latitude")
 async def update_graph_scatter_latitude():
@@ -41,6 +74,8 @@ async def update_graph_scatter_latitude():
 @app.websocket("/trip_longitude")
 async def update_graph_scatter_longitude():
     data = json.dumps(update_graph_scatter("trip_longitude.csv", "trip(m)", "longitude"))
+    print(type(data))
+    print(data)
     await websocket.send(data)
     await asyncio.sleep(5)
 
@@ -62,4 +97,4 @@ def update_graph_scatter(name, x_axis, y_axis):
 
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(port=5000, debug=True)

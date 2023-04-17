@@ -130,3 +130,5 @@ dmypy.json
 
 # node modules
 websocket/node_modules/
+
+.idea/
