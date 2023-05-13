@@ -24,10 +24,15 @@ def test():
 
 @app.route('/input-data', methods=['POST'])
 def append_data():
-    data = request.data
-    f = open('data.json', "w+")
+    data = request.data.decode("utf-8")
+    json_data = json.loads(data)
+    print(json_data)
+    f = open('data.json')
     print("Microservice Data Received")
     json_file = json.load(f)
-    json_file.update(data)
+    json_file.update(json_data)
+    json_file_str = json.dumps(json_file)
     with open('data.json', 'w') as output:
-        output.write(json_file)
+        output.write(json_file_str)
+
+    return "success"
