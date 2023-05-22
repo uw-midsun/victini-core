@@ -55,6 +55,9 @@ def interpolate_coordinates(
 
 
 def split_lat_long(coordinates: list[tuple] = None):
+    if coordinates is None:
+        raise TypeError("coordinates cannot be None")
+
     latitudes = []
     longitudes = []
     for c in enumerate(coordinates):
