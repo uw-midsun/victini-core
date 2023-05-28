@@ -45,13 +45,13 @@ def interpolate_coordinates(
     segment_points[len(all_coordinates) - 1] = len(segment_cooridnates)
     for _, coordinate in enumerate(all_coordinates):
         interpolated_coordinates.append((coordinate[0], coordinate[1]))
-    coordinate_point_index = [
+    polyline_point_index = [
         segment_points[i] if i in segment_points else None
         for i in range(len(all_coordinates))
     ]
 
     # 4. Return coordinate_point_index and interpolated_coordinates
-    return coordinate_point_index, interpolated_coordinates
+    return polyline_point_index, interpolated_coordinates
 
 
 def split_lat_long(coordinates: list[tuple] = None):
@@ -60,8 +60,62 @@ def split_lat_long(coordinates: list[tuple] = None):
 
     latitudes = []
     longitudes = []
-    for c in enumerate(coordinates):
+    for c in coordinates:
         latitudes.append(c[0])
         longitudes.append(c[1])
 
     return latitudes, longitudes
+
+
+def coordinate_distances_bearings(coordinates: list[tuple] = None):
+    if coordinates is None:
+        raise TypeError("coordinates cannot be None")
+
+    elapsed_dist = [0]
+    dist_to_next_coordinate = []
+    true_bearing_to_next = []
+    for i, _ in enumerate(coordinates[:-1]):
+        lat_1, long_1 = coordinates[i]
+        lat_2, long_2 = coordinates[i + 1]
+        geo_data = Geodesic.WGS84.Inverse(
+            lat_1, long_1, lat_2, long_2
+        )  # return values: https://geographiclib.sourceforge.io/1.52/python/interface.html
+        dist_to_next_coordinate.append(geo_data["s12"])  # dist between coordinates
+        elapsed_dist.append(elapsed_dist[-1] + geo_data["s12"])  # trip dist so far
+        true_bearing_to_next.append(geo_data["azi1"])  # bearing to next
+    dist_to_next_coordinate.append(None)
+    true_bearing_to_next.append(None)
+
+    return elapsed_dist, dist_to_next_coordinate, true_bearing_to_next
+
+
+def travel_direction(bearings: list = None):
+    if bearings is None:
+        raise TypeError("bearings cannot be None")
+
+    general_travel_direction = []
+    for bearing in bearings:
+        if bearing is None:
+            general_travel_direction.append(None)
+        elif bearing == 0 or bearing == 360:
+            general_travel_direction.append("N")
+        elif bearing == 90:
+            general_travel_direction.append("E")
+        elif bearing == 180 or bearing == -180:
+            general_travel_direction.append("S")
+        elif bearing == -90:
+            general_travel_direction.append("W")
+        elif 0 < bearing < 90:
+            general_travel_direction.append(f"N{bearing:.0f}{chr(176)}E")
+        elif 90 < bearing < 180:
+            general_travel_direction.append(f"S{bearing-90:.0f}{chr(176)}E")
+        elif -90 < bearing < 0:
+            general_travel_direction.append(f"N{abs(bearing):.0f}{chr(176)}W")
+        elif -180 < bearing < -90:
+            general_travel_direction.append(f"S{bearing+180:.0f}{chr(176)}W")
+
+    return general_travel_direction
+
+
+def turn_angles(coordinates: list[tuple] = None):
+    ...
