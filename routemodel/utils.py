@@ -1,7 +1,6 @@
 import json
 import math
 
-import pandas as pd
 import requests
 from geographiclib.geodesic import Geodesic
 from pyproj import Geod
@@ -84,7 +83,8 @@ def coordinate_distances_bearings(coordinates: list[tuple] = None):
             lat_1, long_1, lat_2, long_2
         )  # return values: https://geographiclib.sourceforge.io/1.52/python/interface.html
         dist_to_next_coordinate.append(geo_data["s12"])  # dist between coordinates
-        elapsed_dist.append(elapsed_dist[-1] + geo_data["s12"])  # trip dist so far
+        # trip dist so far
+        elapsed_dist.append(elapsed_dist[-1] + geo_data["s12"])
         true_bearing_to_next.append(geo_data["azi1"])  # bearing to next
     dist_to_next_coordinate.append(None)
     true_bearing_to_next.append(None)
@@ -135,7 +135,7 @@ def elevations_bing(coordinates: list = None, BING_MAPS_API_KEY: str = ""):
     # - https://learn.microsoft.com/en-us/bingmaps/rest-services/elevations/point-compression-algorithm
     # - Requires: coordinates
     # - Result: compressed_coordinates_lst
-    list_len = 1000  # Change list_len if there's an API size issue
+    list_len = 250  # Change list_len if there's an API size issue
     split_coordinates = [
         coordinates[i : min(i + list_len, len(coordinates))]
         for i in range(0, len(coordinates), list_len)
