@@ -61,3 +61,13 @@ class RouteModel:
         data = data.fillna("")
         format_filename = f"{filename}.csv" if ".csv" not in filename else filename
         data.to_csv(format_filename)
+
+    def location_service_csv(self):
+        data = pd.DataFrame(
+            {
+                "coordinates": self.coordinates,
+                "latitude": self.latitudes,
+                "longitude": self.longitudes,
+            }
+        ).fillna("")
+        data.to_csv("location_service.csv")

@@ -24,5 +24,6 @@ if __name__ == "__main__":
     )
     route.show()
     route.save_csv()
+    route.location_service_csv()
 
     # Todo: Elevation percent grade
