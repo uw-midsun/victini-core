@@ -35,6 +35,7 @@ class RouteModel:
     def generate_dataframe(self):
         data = pd.DataFrame(
             {
+                "id": [i for i in range(len(self.coordinates))],
                 "polyline_point_index": self.polyline_point_index,
                 "coordinates": self.coordinates,
                 "latitude": self.latitudes,
@@ -65,6 +66,7 @@ class RouteModel:
     def location_service_csv(self):
         data = pd.DataFrame(
             {
+                "id": [i for i in range(len(self.coordinates))],
                 "coordinates": self.coordinates,
                 "latitude": self.latitudes,
                 "longitude": self.longitudes,
