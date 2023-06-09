@@ -11,9 +11,6 @@ class Location(db.Model):
     __tablename__ = tablename
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False, unique=True)
-
-    coordinate = db.Column(
-        Geography(geometry_type="POINT", srid=4326), nullable=False, unique=True
-    )
+    # coordinate = db.Column(Geography(geometry_type="POINT", srid=4326))
     latitude = db.Column(db.Numeric(precision=9, scale=6), nullable=False)
     longitude = db.Column(db.Numeric(precision=9, scale=6), nullable=False)
