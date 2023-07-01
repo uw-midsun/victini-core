@@ -1,10 +1,10 @@
-from bson.json_util import dumps
-from dotenv import load_dotenv
 import os
-from pymongo import MongoClient
 import sys
 
+from bson.json_util import dumps
 from docker_commands import on_insert
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 mongo_url = os.getenv("MONGO_URL")

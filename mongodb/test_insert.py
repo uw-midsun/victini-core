@@ -1,9 +1,9 @@
-from dotenv import load_dotenv
 import os
-from pymongo import MongoClient
 import sys
 
 from car_data import CarData, Location
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 # The MONGO_URL environment variable is set in the .env file
