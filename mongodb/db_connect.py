@@ -8,6 +8,7 @@ from docker_commands import on_insert
 load_dotenv()
 mongo_url = os.getenv('MONGO_URL')
 
+
 def connect():
     '''
     Connect to MongoDB and return the client.
@@ -23,6 +24,7 @@ def connect():
         
     return client
 
+
 def check_change(client: MongoClient):
     '''
     Tracks changes in the database and calls the on_insert function when a new document is inserted.
@@ -31,18 +33,18 @@ def check_change(client: MongoClient):
     Runs indefinitely until the program is stopped.
     '''
     change_stream = client['race-data']['car-location'].watch([{
-        '$match': {
-            'operationType': { '$in': ['insert'] }
-        }
+        '$match': {'operationType': { '$in': ['insert'] }}
     }])
     for change in change_stream:
         print(dumps(change))
-        print('') # for readability only
+        print('')  # for readability only
         on_insert(change['fullDocument'])
 
+
 def main():
-    client = connect() # Connect to MongoDB
-    check_change(client) # Track changes in the database
+    client = connect()  # Connect to MongoDB
+    check_change(client)  # Track changes in the database
+
 
 if __name__ == "__main__":
     main()

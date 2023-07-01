@@ -3,6 +3,7 @@ from typing import Dict, Optional
 from pydantic import BaseModel, Field
 from bson import Binary
 
+
 class Location(BaseModel):
     '''
     The location of the car.
@@ -12,11 +13,13 @@ class Location(BaseModel):
     Lattitude: Dict[str, float]
     Longitude: Dict[str, float]
 
+
 def uuid_conversion() -> str:
     '''
     Creates a UUID and converts it to a string for use as a MongoDB _id.
     '''
     return str(Binary.from_uuid(uuid.uuid4()))
+
 
 class CarData(BaseModel):
     '''
@@ -26,4 +29,3 @@ class CarData(BaseModel):
     _id: Optional[str] = Field(default_factory=uuid_conversion, alias='_id')
     location: Location = Field(...)
     speed: int = Field(...)
-    
