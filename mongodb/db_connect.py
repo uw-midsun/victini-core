@@ -1,8 +1,9 @@
-from pymongo import MongoClient
-import os
-import sys
-from dotenv import load_dotenv
 from bson.json_util import dumps
+from dotenv import load_dotenv
+import os
+from pymongo import MongoClient
+import sys
+
 from docker_commands import on_insert
 
 load_dotenv()

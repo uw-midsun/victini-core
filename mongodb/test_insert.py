@@ -1,7 +1,8 @@
-from pymongo import MongoClient
-import os
-import sys
 from dotenv import load_dotenv
+import os
+from pymongo import MongoClient
+import sys
+
 from car_data import CarData, Location
 
 load_dotenv()

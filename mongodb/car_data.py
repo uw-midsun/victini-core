@@ -1,7 +1,7 @@
+from bson import Binary
+from pydantic import BaseModel, Field
 import uuid
 from typing import Dict, Optional
-from pydantic import BaseModel, Field
-from bson import Binary
 
 
 class Location(BaseModel):
