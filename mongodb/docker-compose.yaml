@@ -2,9 +2,12 @@ version: '3.7'
 services:
   mongodb:
     image: mongo:latest
-    # environment:
+    # Commented out for now, as it's not working (will update once it's fixed)
+    environment:
     #   MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT:-mongodb}
     #   MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-mongodb}
+      DB_NAME: ${DB_NAME}
+      COLLECTION_NAME: ${COLLECTION_NAME}
     networks:
       - services
     ports:

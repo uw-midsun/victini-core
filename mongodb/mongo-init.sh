@@ -2,8 +2,8 @@ set -e
 
 mongosh <<EOF
 
-use race-data
+use ${DB_NAME}
 
-db.createCollection('car-location')
+db.createCollection(${COLLECTION_NAME})
 
 EOF
