@@ -1,0 +1,11 @@
+FROM python:3.11-alpine
+
+WORKDIR /
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY ./src ./src
+
+# flask run -h localhost -p 5000
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"] 
