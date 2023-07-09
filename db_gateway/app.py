@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 import urllib, os
 from sqlalchemy import text
 from dotenv import load_dotenv
+import pymysql
+pymysql.install_as_MySQLdb()
 
 load_dotenv()
 
@@ -17,7 +19,7 @@ DATABASE_PASSWORD_UPDATED = urllib.parse.quote_plus(DATABASE_PASSWORD)
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pymssql://'+DATABASE_USERNAME+':'+DATABASE_PASSWORD_UPDATED +'@'+DATABASE_HOST+'/'+DATABASE_NAME
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+DATABASE_USERNAME+':'+DATABASE_PASSWORD_UPDATED +'@'+DATABASE_HOST+'/'+DATABASE_NAME
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
