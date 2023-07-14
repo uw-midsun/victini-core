@@ -2,6 +2,8 @@ beautifulsoup4==4.12.2
 black==23.7.0
 click==8.1.5
 colorama==0.4.6
+geographiclib==2.0
+geopy==2.3.0
 mypy-extensions==1.0.0
 numpy==1.25.1
 packaging==23.1
