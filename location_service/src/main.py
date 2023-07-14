@@ -93,17 +93,4 @@ def closest_location():
 
 if __name__ == "__main__":
     # db.create_all()
-    # parser = ArgumentParser()
-    # parser.add_argument(
-    #     "-f", "--file", dest="filename", help="write report to FILE", metavar="FILE"
-    # )
-    # parser.add_argument(
-    #     "-q",
-    #     "--quiet",
-    #     action="store_false",
-    #     dest="verbose",
-    #     default=True,
-    #     help="don't print status messages to stdout",
-    # )
-    # args = parser.parse_args()
-    pass
+    app.run(debug=True, host="0.0.0.0", port=5000)
