@@ -67,11 +67,9 @@ class Location(db.Model):
         db.session.query(Location).delete()
         for row in df.itertuples():
             geo = "POINT({} {})".format(
-                row.longitude, row.latitude
+                row.lon, row.lat
             )  # Note that postgis is (lon, lat)
-            location = Location(
-                id=row.Index + 1, lat=row.latitude, lon=row.longitude, geo=geo
-            )
+            location = Location(id=row.Index + 1, lat=row.lat, lon=row.lon, geo=geo)
             db.session.add(location)
         db.session.commit()
 
