@@ -1,5 +1,6 @@
 import json
 import os
+from argparse import ArgumentParser
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -11,6 +12,23 @@ from sqlalchemy import asc, func
 
 load_dotenv()
 DATABASE_URI = os.environ.get("DATABASE_URI")
+
+
+parser = ArgumentParser()
+parser.add_argument(
+    "--create-table",
+    type=bool,
+    help="If you want a table to be created in the database",
+    required=False,
+)
+parser.add_argument(
+    "--seed-filename",
+    type=str,
+    help="String of the filepath of the csv file if you want to seed the database with the csv file contents",
+    required=False,
+)
+args = parser.parse_args()
+args = vars(args)
 
 
 app = Flask(__name__)
@@ -44,13 +62,16 @@ class Location(db.Model):
         db.session.commit()
 
     @staticmethod
-    def create_from_csv(filename):
+    def seed_from_csv(filename):
         df = pd.read_csv(filename)
+        db.session.query(Location).delete()
         for row in df.itertuples():
             geo = "POINT({} {})".format(
                 row.longitude, row.latitude
             )  # Note that postgis is (lon, lat)
-            location = Location(lat=row.latitude, lon=row.longitude, geo=geo)
+            location = Location(
+                id=row.Index + 1, lat=row.latitude, lon=row.longitude, geo=geo
+            )
             db.session.add(location)
         db.session.commit()
 
@@ -92,5 +113,8 @@ def closest_location():
 
 
 if __name__ == "__main__":
-    # db.create_all()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    if args["create_table"]:
+        db.create_all()
+    if args["seed_filename"]:
+        Location.seed_from_csv(args["seed_filename"])
+    app.run(debug=False, host="0.0.0.0", port=5000)
