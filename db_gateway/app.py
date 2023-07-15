@@ -14,6 +14,7 @@ load_dotenv()
 DATABASE_HOST = os.getenv("DATABASE_HOST")
 DATABASE_NAME = os.getenv("DATABASE_NAME")
 DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
+DATABASE_PORT = os.getenv("DATABASE_PORT")
 DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
 DATABASE_PASSWORD_UPDATED = urllib.parse.quote_plus(DATABASE_PASSWORD)
 
@@ -21,12 +22,14 @@ app = Flask(__name__)
 CORS(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "mysql://"
+    "postgresql://"
     + DATABASE_USERNAME
     + ":"
     + DATABASE_PASSWORD_UPDATED
     + "@"
     + DATABASE_HOST
+    + ":"
+    + DATABASE_PORT
     + "/"
     + DATABASE_NAME
 )
