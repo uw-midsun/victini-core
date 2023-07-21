@@ -1,0 +1,13 @@
+<html>
+<head>
+    <title>Routes</title>
+</head>
+<body>
+    <h1>Routes</h1>
+    <ul>
+        {% for point in routes %}
+        <li>{{ point.lat }} / {{ point.lon }} - Temperature: {{ point.temperature }} C</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
