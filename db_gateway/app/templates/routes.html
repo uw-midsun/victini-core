@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Route Points</title>
+</head>
+<body>
+    <h1>Route Points</h1>
+    <table>
+        <tr>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Temperature</th>
+            <th>Speed</th>
+        </tr>
+        {% for point in route %}
+        <tr>
+            <td>{{ point.lat }}</td>
+            <td>{{ point.lon }}</td>
+            <td>{{ point.temperature }}</td>
+            <td>{{ point.speed }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
