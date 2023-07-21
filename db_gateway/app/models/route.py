@@ -19,5 +19,5 @@ class RoutePoints(db.Model):
     self.speed = speed
     self.wkb_geometry = f"POINT({lon} {lat})"
 
-  def __repr__(self):
-    return f"Route('{self.name}', ({self.latitude}, {self.longitude}), Temp: {self.temperature}, Ideal Speed: {self.speed})"
+  # def __repr__(self):
+  #   return f"Route(({self.lat}, {self.lon}), Temp: {self.temperature}, Ideal Speed: {self.speed})"
