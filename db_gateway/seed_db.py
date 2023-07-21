@@ -19,6 +19,7 @@ def seed_database(csv_file):
                 db.session.add(route)
         
         db.session.commit()
+        db.session.close()
 
 if __name__ == '__main__':
     csv_file_path = r'./seed_data.csv'
