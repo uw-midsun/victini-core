@@ -12,30 +12,29 @@ class RouteModel(SQLAlchemyObjectType):
         model = RouteModelMeta
 
 
-# class mutateRouteModel(graphene.Mutation):
-#     class Arguments:
-#         id = graphene.Int()
-#         lat = graphene.Float()
-#         lon = graphene.Float()
+class mutateRouteModel(graphene.Mutation):
+    class Arguments:
+        id = graphene.Int()
+        lat = graphene.Float()
+        lon = graphene.Float()
 
-#     ok = graphene.Boolean()
-#     routemodel = graphene.Field(RouteModel)
+    ok = graphene.Boolean()
+    routemodel = graphene.Field(RouteModel)
 
-#     def mutate(
-#         root, info, id, lat: Optional[float] = None, lon: Optional[float] = None
-#     ):
-#         routemodel = db_session.query(RouteModelMeta).filter_by(id=id).first()
-#         if not lat:
-#             routemodel.lat = lat
-#         if not lon:
-#             routemodel.lon = lon
-#         db_session.commit()
-#         ok = True
-#         return mutateRouteModel(ok=ok, routemodel=routemodel)
+    def mutate(
+        root, info, id, lat: Optional[float] = None, lon: Optional[float] = None
+    ):
+        routemodel = db_session.query(RouteModelMeta).filter_by(id=id).first()
+        if lat:
+            routemodel.lat = lat
+        if lon:
+            routemodel.lon = lon
+        db_session.commit()
+        return mutateRouteModel(ok=True, routemodel=routemodel)
 
 
-# class Mutation(graphene.ObjectType):
-#     mutate_routemodel = mutateRouteModel.Field()
+class Mutation(graphene.ObjectType):
+    mutate_routemodel = mutateRouteModel.Field()
 
 
 class Query(graphene.ObjectType):
@@ -45,5 +44,4 @@ class Query(graphene.ObjectType):
         return db_session.query(RouteModelMeta).filter_by(id=id).first()
 
 
-schema = graphene.Schema(query=Query)
-# schema = graphene.Schema(query=Query, mutation=Mutation)
+schema = graphene.Schema(query=Query, mutation=Mutation)
