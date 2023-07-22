@@ -1,6 +1,5 @@
 from database import Base
 from sqlalchemy import Column, Float, Integer
-from sqlalchemy.orm import backref, relationship
 
 
 class RouteModel(Base):
