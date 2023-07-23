@@ -30,6 +30,13 @@ def seed_from_csv(filename):
     df = pd.read_csv(filename)
     db_session.query(RouteModel).delete()
     for row in df.itertuples():
-        location = RouteModel(id=row.Index + 1, lat=row.lat, lon=row.lon)
+        location = RouteModel(
+            id=row.Index + 1,
+            lat=row.lat,
+            lon=row.lon,
+            dir=row.dir if not pd.isnull(row.dir) else None,
+            geopy_elapsed_dist_m=row.geopy_elapsed_dist_m,
+            geopy_dist_from_last_m=row.geopy_dist_from_last_m,
+        )
         db_session.add(location)
     db_session.commit()
