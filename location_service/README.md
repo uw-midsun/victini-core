@@ -10,7 +10,7 @@ This service acts as an entrypoint for the car to the microservices. The car wil
 
 ### Build image
 
-Make sure you have docker daemon running and add your `DATABASE_URI` string as an environment variable in the Dockerfile. Make sure you're in the `location_service` directory and run:
+Make sure you have the docker daemon running and add your `DATABASE_URI` string as an environment variable in the `Dockerfile`. Make sure you're in the `location_service` directory and run:
 
 ```
 docker build . -t location_service
@@ -24,7 +24,7 @@ To run the service, run:
 docker run -p 5000:5000 location_service
 ```
 
-and the service will be running on [`localhost:5000`](http://localhost:5000/)
+and the service will be running on [localhost:5000](http://localhost:5000/)
 
 ---
 
@@ -32,7 +32,7 @@ and the service will be running on [`localhost:5000`](http://localhost:5000/)
 
 ### `/all` [GET]
 
-Get all data in the `location_service` database
+Retruns all the data in the `location_service` database
 
 ### `/location` [POST]
 
@@ -52,13 +52,13 @@ and returns the coordinate (row) in the `location_service` database that is clos
 ## Other: Command Line Args
 
 ```
-    arg="--create-table",
-    type=bool,
-    help="If you want a table to be created in the database",
-    required=False,
+arg="--create-table",
+type=bool,
+help="If you want a table to be created in the database",
+required=False,
 
-    arg="--seed-filename",
-    type=str,
-    help="String of the filepath of the csv file if you want to seed the database with the csv file contents",
-    required=False,
+arg="--seed-filename",
+type=str,
+help="String of the filepath of the csv file if you want to seed the database with the csv file contents",
+required=False,
 ```
