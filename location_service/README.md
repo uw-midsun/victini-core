@@ -4,6 +4,8 @@ This service acts as an entrypoint for the car to the microservices. The car wil
 
 **TODO: API request from location service to historical car/MongoDB service**
 
+---
+
 ## Docker Commands
 
 ### Build image
@@ -24,6 +26,8 @@ docker run -p 5000:5000 location_service
 
 and the service will be running on [`localhost:5000`](http://localhost:5000/)
 
+---
+
 ## Usage (Endpoints)
 
 ### `/all` [GET]
@@ -42,6 +46,8 @@ Expected body:
 ```
 
 and returns the coordinate (row) in the `location_service` database that is closest to the coordinate given in the request body
+
+---
 
 ## Other: Command Line Args
 
