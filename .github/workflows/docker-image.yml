@@ -14,5 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Build location service image
+      run: docker build /location_service --file Dockerfile --tag location_service:$(date +%s)
+#     - name: Build <service name>
+#       run: docker build /<service_name> --file Dockerfile --tag <service_name>:$(date +%s)
