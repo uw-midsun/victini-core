@@ -25,26 +25,29 @@ class RouteModel:
             self.dist_to_next_coordinate,
             self.true_bearing_to_next,
         ) = utils.coordinate_distances_bearings(self.coordinates)
+        # Turn angles
+        self.relative_turn_angles = utils.relative_turn_angles(self.coordinates)
         # Get travel direction (relative to earth)
         self.travel_direction = utils.travel_direction(self.true_bearing_to_next)
         # Get elevations and elevation gain between coordinates
-        self.elevations, self.relative_elevation_gains = utils.elevations_bing(
+        self.elevations, self.relative_elevation_gains, self.elevation_gain_angles = utils.elevations_bing(
             self.coordinates, BING_MAPS_API_KEY
         )
 
     def generate_dataframe(self):
         data = pd.DataFrame(
             {
-                "id": [i for i in range(len(self.coordinates))],
                 "polyline_point_index": self.polyline_point_index,
                 "coordinates": self.coordinates,
                 "latitude": self.latitudes,
                 "longitude": self.longitudes,
                 "elevation_meters": self.elevations,
                 "elevation_gains_to_next_meters": self.relative_elevation_gains,
+                "elevation_gain_angles": self.elevation_gain_angles,
                 "elapsed_dist_meters": self.elapsed_dist,
                 "dist_to_next_coordinate_meters": self.dist_to_next_coordinate,
                 "true_bearing_to_next_coordinate": self.true_bearing_to_next,
+                "relative_turn_angles": self.relative_turn_angles,
                 "travel_direction": self.travel_direction,
                 # "turn_bearing": turn_bearings,
                 # "turn_type": turn_type,
@@ -62,14 +65,3 @@ class RouteModel:
         data = data.fillna("")
         format_filename = f"{filename}.csv" if ".csv" not in filename else filename
         data.to_csv(format_filename)
-
-    def location_service_csv(self):
-        data = pd.DataFrame(
-            {
-                "id": [i for i in range(len(self.coordinates))],
-                "coordinates": self.coordinates,
-                "latitude": self.latitudes,
-                "longitude": self.longitudes,
-            }
-        ).fillna("")
-        data.to_csv("location_service.csv")

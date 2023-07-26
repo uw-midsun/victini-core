@@ -1,6 +1,7 @@
 import json
 import math
 
+import numpy as np
 import requests
 from geographiclib.geodesic import Geodesic
 from pyproj import Geod
@@ -120,8 +121,30 @@ def travel_direction(bearings: list = None):
     return general_travel_direction
 
 
-def turn_angles(coordinates: list[tuple] = None):
-    ...
+def relative_turn_angles(coordinates: list[tuple] = None):
+    if coordinates is None:
+        raise TypeError("coordinates cannot be None")
+
+    all_angles = []
+    for i in range(1, len(coordinates) - 1):
+        point1 = np.array(coordinates[i - 1])
+        point2 = np.array(coordinates[i])
+        point3 = np.array(coordinates[i + 1])
+
+        vector1 = np.array(point2 - point1)
+        vector2 = np.array(point3 - point2)
+
+        # turn angle = acos(dot product / product of normalized vectors)
+        dot_product = np.dot(vector1, vector2)
+        abs_val1 = np.linalg.norm(vector1)
+        abs_val2 = np.linalg.norm(vector2)
+        abs_product = abs_val2 * abs_val1
+
+        radians = math.acos(dot_product / abs_product)
+        turn_angle = np.degrees(radians)       
+        all_angles.append(turn_angle)
+    
+    return all_angles
 
 
 def elevations_bing(coordinates: list = None, BING_MAPS_API_KEY: str = ""):
@@ -202,4 +225,17 @@ def elevations_bing(coordinates: list = None, BING_MAPS_API_KEY: str = ""):
     relative_elevation_gains.append(None)
     relative_elevation_climb.append(None)
 
-    return coordinates_elevations_data, relative_elevation_gains
+    # 5) Calculates the elevation gain angle
+    # - Requires: relative_elevation_gains, magnitude (distance between points, pythagorean) 
+    # - Result: relative_elevation_gain_angle
+    elevation_gain_angle = []
+    for i in range(1, len(coordinates)):
+        point1 = np.array(coordinates[i - 1])
+        point2 = np.array(coordinates[i])
+        distance = np.linalg.norm(point2 - point1)  
+
+        radians = math.atan(relative_elevation_gains[i - 1] / distance) 
+        gain_angle = np.degrees(radians)
+        elevation_gain_angle.append(gain_angle)
+    
+    return coordinates_elevations_data, relative_elevation_gains, elevation_gain_angle
