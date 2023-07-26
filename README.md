@@ -6,11 +6,6 @@
 
 Victini is real-time communication system between a client (car) and multiple microservices. It allows the client (car) to send real-time data to a server via an HTTP request, which will then process that data across multiple microservices and return meaningful/computed data via a websocket to the client.
 
-## Table of Contents
-
-- `background_workers`: Dev instructions and code for background workers in Victini
-- `mock_database`: A setup guide for a mock database that is used while developing Victini microservices
-
 ## How to add your project
 
 1. Create a new folder in the root of the repository for your project

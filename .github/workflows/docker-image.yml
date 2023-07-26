@@ -1,0 +1,22 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build location service
+      run: docker build ./location_service --tag location_service:$(date +%s)
+      
+#     - name: Build <service name>
+#       run: docker build ./<service_name> --tag <service_name>:$(date +%s)
