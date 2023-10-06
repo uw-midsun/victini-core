@@ -1,4 +1,4 @@
-from database import db_session, seed_from_csv
+from .database import db_session, seed_from_csv
 from flask import Flask
 from flask_graphql import GraphQLView
 from schema import schema
@@ -18,5 +18,5 @@ def shutdown_session(exception=None):
 
 
 if __name__ == "__main__":
-    seed_from_csv("../uw_sample_gpx.csv")
+    # seed_from_csv("../uw_sample_gpx.csv")
     app.run()
