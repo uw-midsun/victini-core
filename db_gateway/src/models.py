@@ -1,6 +1,7 @@
 from .database import Base
 from sqlalchemy import Column, Float, Integer, String, ForeignKey
 
+
 class RouteModel(Base):
     __tablename__ = "routemodel"
     id = Column(Integer, primary_key=True)
@@ -14,7 +15,8 @@ class RouteModel(Base):
     gpx_elapsed_dist_m = Column(Float)
     geopy_elapsed_dist_m = Column(Float)
     geopy_dist_from_last_m = Column(Float)
-    weather_id = Column(Integer, ForeignKey('weather.id'))
+    weather_id = Column(Integer, ForeignKey("weather.id"))
+
 
 class Weather(Base):
     __tablename__ = "weather"
