@@ -33,6 +33,13 @@ and the service will be running on [localhost:5000](http://localhost:5000/)
 ### `/all` [GET]
 
 Retruns all the data in the `location_service` database
+Expected body:
+
+```
+{
+    auth_key: <String>
+}
+```
 
 ### `/location` [POST]
 
@@ -41,7 +48,8 @@ Expected body:
 ```
 {
     lat: <Float>,
-    lon: <Float>
+    lon: <Float>,
+    auth_key: <String>
 }
 ```
 

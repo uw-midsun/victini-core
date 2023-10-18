@@ -12,6 +12,7 @@ from sqlalchemy import asc, func
 
 load_dotenv()
 DATABASE_URI = os.environ.get("DATABASE_URI")
+AUTH_KEY = os.environ.get("AUTH_KEY")
 
 
 parser = ArgumentParser()
@@ -74,6 +75,10 @@ class Location(db.Model):
         db.session.commit()
 
 
+def authorized(auth_key):
+    return auth_key == AUTH_KEY
+
+
 @app.route("/", methods=["GET"])
 def index():
     return "location service"
@@ -81,6 +86,10 @@ def index():
 
 @app.route("/all", methods=["GET"])
 def all():
+    body = json.loads(request.data)
+    auth_key = body.get("auth_key", None)
+    if not authorized(auth_key):
+        return "Not authorized", 401
     locations = db.session.query(Location).order_by(asc(Location.id))
     return [l.to_dict() for l in locations]
 
@@ -90,6 +99,9 @@ def closest_location():
     body = json.loads(request.data)
     lat = body.get("lat", None)
     lon = body.get("lon", None)
+    auth_key = body.get("auth_key", None)
+    if not authorized(auth_key):
+        return "Not authorized", 401
     if lat is None or lon is None:
         return "Invalid request body", 400
     location = (
