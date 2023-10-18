@@ -2,7 +2,7 @@ FROM python:3.11.4-buster
 RUN pip install --upgrade cython pip
 
 ENV DATABASE_URI=""
-ENV AUTH_KEY="dev_user"
+ENV AUTH_KEY=""
 
 WORKDIR /usr/location_service
 
