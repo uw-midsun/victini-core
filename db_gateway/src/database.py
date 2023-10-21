@@ -23,6 +23,7 @@ Base.query = db_session.query_property()
 def check_null(value):
     return None if pd.isnull(value) else value
 
+
 # Moved the seed function to the etl folder
 
 # def seed_from_csv(filename):

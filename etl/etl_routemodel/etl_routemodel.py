@@ -17,7 +17,9 @@ from geopy import distance
 # Bring the db_gateway models into scope
 import sys, os
 from os.path import dirname, abspath, join, normpath
-sys.path.append(normpath(abspath(join(dirname(__file__), '..', '..'))))
+
+sys.path.append(normpath(abspath(join(dirname(__file__), "..", ".."))))
+
 
 def gpx_json_to_df(json_filepath):
     df_rows = []
@@ -57,20 +59,25 @@ def gpx_json_to_df(json_filepath):
         df_rows.append(data)
     return pd.DataFrame(df_rows)
 
+
 # Step 2
 
 # Import database information from db_gateway
 # Note, it's important to import the Base instead of redeclaring, otherwise create_all() will fail
 from db_gateway.src.database import Base, engine, db_session
 
+
 def check_null(value):
     return None if pd.isnull(value) else value
+
 
 def seed_from_csv(filename):
     # import all modules here that might define models before calling init_db()
     from db_gateway.src.models import RouteModel, Weather
 
-    Base.metadata.create_all(bind=engine, tables=[RouteModel.__table__, Weather.__table__])
+    Base.metadata.create_all(
+        bind=engine, tables=[RouteModel.__table__, Weather.__table__]
+    )
 
     df = pd.read_csv(filename)
     for row in df.itertuples():
@@ -93,8 +100,12 @@ def seed_from_csv(filename):
 
 
 if __name__ == "__main__":
-    route_model_json_filepath = normpath(abspath(join(dirname(__file__), '..', 'data', 'routemodel_gpx.json'))) 
-    route_model_csv_filepath = normpath(abspath(join(dirname(__file__), '..', 'data', 'routemodel_gpx.csv'))) 
+    route_model_json_filepath = normpath(
+        abspath(join(dirname(__file__), "..", "data", "routemodel_gpx.json"))
+    )
+    route_model_csv_filepath = normpath(
+        abspath(join(dirname(__file__), "..", "data", "routemodel_gpx.csv"))
+    )
 
     print(route_model_json_filepath, route_model_csv_filepath)
 
