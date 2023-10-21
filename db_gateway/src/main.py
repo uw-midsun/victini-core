@@ -1,4 +1,4 @@
-from .database import db_session, seed_from_csv
+from database import db_session
 from flask import Flask
 from flask_graphql import GraphQLView
 from schema import schema

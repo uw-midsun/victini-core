@@ -1,4 +1,4 @@
-from .database import Base
+from database import Base
 from sqlalchemy import Column, Float, Integer, String, ForeignKey
 
 class RouteModel(Base):
