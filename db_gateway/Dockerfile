@@ -2,9 +2,8 @@ FROM python:3.11.4-buster
 RUN pip install --upgrade cython pip
 
 ENV DATABASE_URI=""
-ENV AUTH_KEY=""
 
-WORKDIR /usr/location_service
+WORKDIR /usr/db_gateway
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
@@ -12,5 +11,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 
-EXPOSE 5000
-CMD [ "python", "src/main.py", "--create-table", "true", "--seed-filename", "./uw_sample_gpx.csv" ]
+EXPOSE 5001
+CMD [ "python", "src/main.py", "--reset-tables", "true" ]

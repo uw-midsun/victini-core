@@ -10,10 +10,12 @@ from typing import Optional
 class RouteModel(SQLAlchemyObjectType):
     class Meta:
         model = RouteModelMeta
-        
+
+
 class Weather(SQLAlchemyObjectType):
     class Meta:
         model = WeatherMeta
+
 
 class mutateRouteModel(graphene.Mutation):
     class Arguments:
@@ -35,6 +37,7 @@ class mutateRouteModel(graphene.Mutation):
         db_session.commit()
         return mutateRouteModel(ok=True, routemodel=routemodel)
 
+
 class mutateWeatherModel(graphene.Mutation):
     class Arguments:
         id = graphene.Int()
@@ -45,15 +48,21 @@ class mutateWeatherModel(graphene.Mutation):
         wind_speed = graphene.Float()
         wind_direction = graphene.Float()
         cloud_cover = graphene.Float()
-    
+
     ok = graphene.Boolean()
     weather = graphene.Field(Weather)
 
     def mutate(
-        root, info, id, lat: Optional[float] = None, lon: Optional[float] = None,
-        temperature: Optional[float] = None, humidity: Optional[float] = None,
-        wind_speed: Optional[float] = None, wind_direction: Optional[float] = None,
-        cloud_cover: Optional[float] = None
+        root,
+        info,
+        id,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        temperature: Optional[float] = None,
+        humidity: Optional[float] = None,
+        wind_speed: Optional[float] = None,
+        wind_direction: Optional[float] = None,
+        cloud_cover: Optional[float] = None,
     ):
         weather = db_session.query(WeatherMeta).filter_by(id=id).first()
         if lat:
@@ -73,9 +82,11 @@ class mutateWeatherModel(graphene.Mutation):
         db_session.commit()
         return mutateWeatherModel(ok=True, weather=weather)
 
+
 class Mutation(graphene.ObjectType):
     mutate_routemodel = mutateRouteModel.Field()
     mutate_weather = mutateWeatherModel.Field()
+
 
 class Query(graphene.ObjectType):
     query_routemodel = graphene.Field(RouteModel, id=graphene.Int())
@@ -86,5 +97,6 @@ class Query(graphene.ObjectType):
 
     def resolve_query_weather(root, info, id):
         return db_session.query(WeatherMeta).filter_by(id=id).first()
+
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

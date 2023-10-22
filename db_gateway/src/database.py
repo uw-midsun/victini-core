@@ -24,30 +24,8 @@ def check_null(value):
     return None if pd.isnull(value) else value
 
 
-# Moved the seed function to the etl folder
+def reset_tables():
+    from models import RouteModel, Weather
 
-# def seed_from_csv(filename):
-#     # import all modules here that might define models before calling init_db()
-#     from models import RouteModel
-
-#     Base.metadata.drop_all(bind=engine)
-#     Base.metadata.create_all(bind=engine)
-
-#     df = pd.read_csv(filename)
-#     db_session.query(RouteModel).delete()
-#     for row in df.itertuples():
-#         location = RouteModel(
-#             id=row.Index + 1,
-#             lat=check_null(row.lat),
-#             lon=check_null(row.lon),
-#             type=check_null(row.type),
-#             step=check_null(row.step),
-#             next_turn=check_null(row.next_turn),
-#             dir=check_null(row.dir),
-#             gpx_dist_to_next_waypoint_m=check_null(row.gpx_dist_to_next_waypoint_m),
-#             gpx_elapsed_dist_m=check_null(row.gpx_elapsed_dist_m),
-#             geopy_elapsed_dist_m=check_null(row.geopy_elapsed_dist_m),
-#             geopy_dist_from_last_m=check_null(row.geopy_dist_from_last_m),
-#         )
-#         db_session.add(location)
-#     db_session.commit()
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
