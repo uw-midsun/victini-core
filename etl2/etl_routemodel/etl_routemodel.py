@@ -5,13 +5,14 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from geopy import distance
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 
 
 def gpx_json_to_df(json_filepath):
     file = Path(json_filepath)
     if not file.is_file():
         raise FileNotFoundError("No file exists at the location specified")
+
     df_rows = []
     with open(json_filepath, "r") as f:
         gpx = json.load(f)
@@ -46,6 +47,7 @@ def gpx_json_to_df(json_filepath):
         # if time := point.get("timeto", None):
         #     data["time_to_next_s"] = time["val"]
         df_rows.append(data)
+
     df = pd.DataFrame(df_rows)
     csv_filepath = file.with_suffix(".csv")
     if not csv_filepath.is_file():
@@ -60,17 +62,23 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
     df = pd.read_csv(file)
     df.fillna(np.nan).replace([np.nan], [None])
     df = df.drop(columns=["Unnamed: 0"])
+    # df = df.head(10) # For testing purposes
 
     engine = create_engine(
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
+
+    df.index += 1  # Making table 1-indexed
+    if inspect(engine).has_table("routemodel"):
+        row_len = pd.read_sql_query(sql="SELECT COUNT(*) FROM routemodel", con=engine)
+        df.index += row_len.iloc[0, 0]
+
     response = df.to_sql(
         name="routemodel",
         con=engine,
         schema="public",
-        # dtype=routemodel_schema,
         if_exists="append",
-        index=False,
+        index=True,
         method="multi",
     )
     if df.shape[0] != response:
