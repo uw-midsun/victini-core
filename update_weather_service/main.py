@@ -1,6 +1,7 @@
 import json
 import os
 
+import requests
 from dotenv import load_dotenv
 from flask import Flask, request
 from update_weather import update_weather
@@ -23,6 +24,14 @@ def authorized(auth_key):
     return auth_key == AUTH_KEY
 
 
+def connected_to_internet():
+    try:
+        request = requests.get("http://www.google.com", timeout=5)
+        return True
+    except (requests.ConnectionError, requests.Timeout) as exception:
+        return False
+
+
 @app.route("/", methods=["GET"])
 def index():
     return "update weather service"
@@ -33,10 +42,12 @@ def update_weather():
     body = json.loads(request.data)
     auth_key = body.get("auth_key", None)
     id = body.get("id", None)
-    if not authorized(auth_key):
-        return "Not authorized", 401
     if id is None or int(id) < 1:
         return "Invalid request body", 400
+    if not authorized(auth_key):
+        return "Not authorized", 401
+    if not connected_to_internet():
+        return "Not connected to the internet", 408
 
     res, status = update_weather(
         DATABASE_USER,
