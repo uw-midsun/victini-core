@@ -88,7 +88,10 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
 
 
 def main(gpx_json_filepath, db_user, db_password, db_host, db_name):
+    print("1) Parsing gpx json format to csv format...")
     csv_filepath = gpx_json_to_df(gpx_json_filepath)
+
+    print("2) Seeding routemodel csv into database...")
     seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name)
 
 

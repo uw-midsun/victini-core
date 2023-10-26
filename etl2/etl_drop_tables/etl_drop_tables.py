@@ -15,6 +15,7 @@ def drop_tables(db_user, db_password, db_host, db_name, table_names):
 
 
 def main(db_user, db_password, db_host, db_name, table_names):
+    print("1) Dropping tables...")
     drop_tables(db_user, db_password, db_host, db_name, table_names)
 
 
