@@ -84,7 +84,7 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
     if df.shape[0] != response:
         raise SystemError("dataframe insertion failed")
     else:
-        print("dataframe insertion success")
+        print("routemodel dataframe insertion success")
 
 
 def main(gpx_json_filepath, db_user, db_password, db_host, db_name):

@@ -4,6 +4,7 @@ import psycopg2
 import questionary
 from termcolor import colored
 from etl_routemodel.etl_routemodel import main as run_routemodel_etl
+from etl_weather.etl_weather import main as run_weather_etl
 
 
 def validate_db_creds(db_user, db_password, db_host, db_name):
@@ -62,7 +63,58 @@ def cmd_routemodel():
 
 
 def cmd_weather():
-    ...
+    answers = questionary.form(
+        db_host=questionary.text("Database host:port", default=""),
+        db_name=questionary.text("Database name", default=""),
+        db_user=questionary.text("Database user", default=""),
+        db_password=questionary.password("Database user password", default=""),
+        weather_range=questionary.text(
+            "Weather range (number)", validate=lambda n: n.isnumeric()
+        ),
+        openweathermap_api_key=questionary.password(
+            "Openweathermap API key", default=""
+        ),
+        confirm=questionary.confirm(
+            "Confirm routemodel ETL operation",
+            default=False,
+            auto_enter=False,
+        ),
+    ).ask()
+
+    (
+        db_host,
+        db_name,
+        db_user,
+        db_password,
+        weather_range,
+        openweathermap_api_key,
+        confirm,
+    ) = map(
+        answers.get,
+        (
+            "db_host",
+            "db_name",
+            "db_user",
+            "db_password",
+            "weather_range",
+            "openweathermap_api_key",
+            "confirm",
+        ),
+    )
+    if not confirm:
+        print(colored("weather ETL cancelled", "red"))
+    elif confirm and validate_db_creds(db_user, db_password, db_host, db_name):
+        run_weather_etl(
+            db_user,
+            db_password,
+            db_host,
+            db_name,
+            openweathermap_api_key,
+            int(weather_range),
+        )
+        print(colored("weather ETL success", "green"))
+    else:
+        print(colored("Incorrect database credentials", "red"))
 
 
 if __name__ == "__main__":
