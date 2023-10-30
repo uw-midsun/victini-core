@@ -1,27 +1,18 @@
-"""
-etl_routemodel.py loads routemodel data into the database in two steps:
-1. Creates data/routemodel.csv from a gpx file
-2. Takes data/routemodel.csv and loads it into the Azure Postgres db
-
-Here is a suggested route: https://www.google.ca/maps/dir/Fulton,+MO,+USA/Davenport/Great+River+Rd+%26+Gaylord+Nelson+Hwy,+Trenton,+WI+54014,+USA/@42.7215958,-91.0372306,7z/data=!3m1!4b1!4m35!4m34!1m5!1m1!1s0x87dc8e579b700d25:0xf0215f3f96f20e66!2m2!1d-91.9479586!2d38.8467082!1m20!1m1!1s0x87e234c5e012a2f1:0xe8ea1f6356581fb0!2m2!1d-90.5776367!2d41.5236437!3m4!1m2!1d-92.2319476!2d44.4238558!3s0x87f8338724908edf:0xca9b25d292ef7845!3m4!1m2!1d-92.3766828!2d44.5058247!3s0x87f82f351959945f:0x50b0245a3e723deb!3m4!1m2!1d-92.4467661!2d44.544585!3s0x87f827936d27e451:0xb48e8cc83edcbde7!1m5!1m1!1s0x87f78be36d3d1e0b:0x177144dc524ef09d!2m2!1d-92.5279297!2d44.6013121!3e0?entry=ttu
-Route is 535 miles along the Mississippi River from Fulton, MO to Trenton, WI :)
-"""
-
-# Step 1
-
-import pandas as pd
 import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 from bs4 import BeautifulSoup
 from geopy import distance
-
-# Bring the db_gateway models into scope
-import sys, os
-from os.path import dirname, abspath, join, normpath
-
-sys.path.append(normpath(abspath(join(dirname(__file__), "..", ".."))))
+from sqlalchemy import create_engine, inspect
 
 
 def gpx_json_to_df(json_filepath):
+    file = Path(json_filepath)
+    if not file.is_file():
+        raise FileNotFoundError("No file exists at the location specified")
+
     df_rows = []
     with open(json_filepath, "r") as f:
         gpx = json.load(f)
@@ -55,62 +46,60 @@ def gpx_json_to_df(json_filepath):
             data["geopy_elapsed_dist_m"] = prev["geopy_elapsed_dist_m"] + dist
         # if time := point.get("timeto", None):
         #     data["time_to_next_s"] = time["val"]
-
         df_rows.append(data)
-    return pd.DataFrame(df_rows)
+
+    df = pd.DataFrame(df_rows)
+    csv_filepath = file.with_suffix(".csv")
+    if not csv_filepath.is_file():
+        df.to_csv(csv_filepath)
+    return csv_filepath
 
 
-# Step 2
+def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
+    file = Path(csv_filepath)
+    if not file.is_file():
+        raise FileNotFoundError("No file exists at the location specified")
+    df = pd.read_csv(file)
+    df.fillna(np.nan).replace([np.nan], [None])
+    df = df.drop(columns=["Unnamed: 0"])
+    df.index.name = "id"
+    # df = df.head(10) # For testing purposes
 
-# Import database information from db_gateway
-# Note, it's important to import the Base instead of redeclaring, otherwise create_all() will fail
-from db_gateway.src.database import Base, engine, db_session
-
-
-def check_null(value):
-    return None if pd.isnull(value) else value
-
-
-def seed_from_csv(filename):
-    # import all modules here that might define models before calling init_db()
-    from db_gateway.src.models import RouteModel, Weather
-
-    Base.metadata.create_all(
-        bind=engine, tables=[RouteModel.__table__, Weather.__table__]
+    engine = create_engine(
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
 
-    df = pd.read_csv(filename)
-    for row in df.itertuples():
-        location = RouteModel(
-            id=row.Index + 1,
-            lat=check_null(row.lat),
-            lon=check_null(row.lon),
-            type=check_null(row.type),
-            step=check_null(row.step),
-            next_turn=check_null(row.next_turn),
-            dir=check_null(row.dir),
-            gpx_dist_to_next_waypoint_m=check_null(row.gpx_dist_to_next_waypoint_m),
-            gpx_elapsed_dist_m=check_null(row.gpx_elapsed_dist_m),
-            geopy_elapsed_dist_m=check_null(row.geopy_elapsed_dist_m),
-            geopy_dist_from_last_m=check_null(row.geopy_dist_from_last_m),
-            weather_id=None,
-        )
-        db_session.add(location)
-    db_session.commit()
+    df.index += 1  # Making table 1-indexed
+    if inspect(engine).has_table("routemodel"):
+        row_len = pd.read_sql_query(sql="SELECT COUNT(*) FROM routemodel", con=engine)
+        df.index += row_len.iloc[0, 0]
+
+    response = df.to_sql(
+        name="routemodel",
+        con=engine,
+        schema="public",
+        if_exists="append",
+        index=True,
+        method="multi",
+    )
+    if df.shape[0] != response:
+        raise SystemError("dataframe insertion failed")
+    else:
+        print("routemodel dataframe insertion success")
+
+
+def main(gpx_json_filepath, db_user, db_password, db_host, db_name):
+    print("1) Parsing gpx json format to csv format...")
+    csv_filepath = gpx_json_to_df(gpx_json_filepath)
+
+    print("2) Seeding routemodel csv into database...")
+    seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name)
 
 
 if __name__ == "__main__":
-    route_model_json_filepath = normpath(
-        abspath(join(dirname(__file__), "..", "data", "routemodel_gpx.json"))
-    )
-    route_model_csv_filepath = normpath(
-        abspath(join(dirname(__file__), "..", "data", "routemodel_gpx.csv"))
-    )
-
-    print(route_model_json_filepath, route_model_csv_filepath)
-
-    if not os.path.exists(route_model_csv_filepath):
-        df = gpx_json_to_df(route_model_json_filepath)
-        df.to_csv(route_model_csv_filepath)
-    seed_from_csv(route_model_csv_filepath)
-    print("Success!")
+    gpx_json_filepath = ""
+    db_user = ""
+    db_password = ""
+    db_host = ""
+    db_name = ""
+    main(gpx_json_filepath, db_user, db_password, db_host, db_name)

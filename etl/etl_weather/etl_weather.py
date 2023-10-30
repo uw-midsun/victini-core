@@ -1,145 +1,146 @@
-"""
-etl_routemodel.py loads routemodel data into the database in two steps:
-1. Creates data/routemodel.csv from a gpx file
-2. Takes data/routemodel.csv and loads it into the Azure Postgres db
-"""
+import random
+import string
+from datetime import datetime
 
-# Step 1
-
+import numpy as np
 import pandas as pd
-import json
-from bs4 import BeautifulSoup
-from geopy import distance
+import requests
+from sqlalchemy import create_engine, inspect
 
-# Bring the db_gateway models into scope
-import sys, os
-from os.path import dirname, abspath, join, normpath
-
-sys.path.append(normpath(abspath(join(dirname(__file__), "..", ".."))))
-
-# Import database information from db_gateway
-# Note, it's important to import the Base instead of redeclaring, otherwise create_all() will fail
-from db_gateway.src.database import Base, engine, db_session
-
-# How many meters between each weather API call
-WEATHER_RANGE = 30000
+API_BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 
-# The logic for this function is WIP, currently it takes a 1 hour forecast for each point starting from the current time
-# Comments with POI will point you towards where you should adjust parameters if you want the forecast to be offset from the current time
-def weather_api_to_df():
-    from get_weather import get_weather
-    from db_gateway.src.models import RouteModel
+def get_weather(lat, long, API_KEY):
+    units = "metric"
+    exclude = "minutely,hourly,daily,alerts"  # To exclude certain weather reports, right now just using current
+    url = f"{API_BASE_URL}?lat={lat}&lon={long}&units={units}&appid={API_KEY}"
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(response.json())
+        raise response.raise_for_status()
 
-    df_rows = []
+    weather_data = response.json()
+    precipitation = (
+        0
+        if "rain" not in weather_data
+        else weather_data["rain"]["1h"] or weather_data["rain"]["3h"]
+    )
+    weather_dict = {
+        "Latitude": lat,
+        "Longitude": long,
+        "Temperature (C)": weather_data["main"]["temp"],
+        "Wind Speed (m/s)": weather_data["wind"]["speed"],
+        "Wind Direction": weather_data["wind"]["deg"],
+        "Weather": weather_data["weather"][0]["main"],
+        "Weather Description": weather_data["weather"][0]["description"],
+        "Pressure (hPa)": weather_data["main"]["pressure"],
+        "Precipitation (mm)": precipitation,
+        "Cloud Cover": weather_data["clouds"]["all"],
+        "Humidity": weather_data["main"]["humidity"],
+    }
+    return weather_dict
 
-    # Go through the RouteModel table and every 30 miles make a call to the weather API
-    # Save the weather data to a dataframe
-    routemodel = db_session.query(RouteModel)
 
-    idx = 0
-    for point in routemodel:
-        if point.geopy_elapsed_dist_m >= WEATHER_RANGE * idx:
-            idx += 1
-            print(
-                "Making {}th weather call at ".format(idx),
-                point.lat,
-                point.lon,
-                "at distance",
-                point.geopy_elapsed_dist_m,
-            )
+def get_routemodel_df(db_user, db_password, db_host, db_name):
+    engine = create_engine(
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
+    )
 
-            # POI: Make the API call
-            weather_data = get_weather(point.lat, point.lon)
+    if not inspect(engine).has_table("routemodel"):
+        raise SystemError("routemodel table does not exist in database")
+    routemodel_df = pd.read_sql_query(sql="SELECT * FROM routemodel", con=engine)
+    return routemodel_df
 
-            print(weather_data)
 
-            if not weather_data:
-                print("No response from API")
-                continue
+def create_weather_update_routemodel(routemodel_df, API_KEY, WEATHER_RANGE):
+    weather_idx = 0
+    weather_df_rows = []
+    routemodel_df["weather_id"] = (
+        pd.to_numeric(routemodel_df["weather_id"], errors="coerce")
+        .fillna(0)
+        .astype(int)
+    )
 
-            # Add the weather data to a dataframe
+    for row in routemodel_df.itertuples():
+        weather_fkey_index = int((row.geopy_elapsed_dist_m // WEATHER_RANGE) + 1)
+        if weather_fkey_index > weather_idx:
+            weather_data = get_weather(row.lat, row.lon, API_KEY)
             data = {
-                "id": idx,
-                "lat": point.lat,
-                "lon": point.lon,
+                "id": weather_fkey_index,
+                "lat": row.lat,
+                "lon": row.lon,
                 "temperature": weather_data["Temperature (C)"],
                 "humidity": weather_data["Humidity"],
                 "wind_speed": weather_data["Wind Speed (m/s)"],
                 "wind_direction": weather_data["Wind Direction"],
                 "cloud_cover": weather_data["Cloud Cover"],
             }
+            weather_df_rows.append(data)
+            weather_idx = weather_fkey_index
+        routemodel_df.at[row.id - 1, "weather_id"] = weather_idx
 
-            df_rows.append(data)
-
-    return pd.DataFrame(df_rows)
-
-
-# Step 2
-
-
-def check_null(value):
-    return None if pd.isnull(value) else value
+    weather_df = pd.DataFrame(weather_df_rows)
+    weather_df.index += 1  # Make it 1-indexed
+    return routemodel_df, weather_df
 
 
-def seed_from_csv(filename):
-    # import all modules here that might define models before calling init_db()
-    from db_gateway.src.models import RouteModel, Weather
+def update_database(routemodel_df, weather_df, db_user, db_password, db_host, db_name):
+    engine = create_engine(
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
+    )
 
-    if (
-        engine.has_table(engine, Weather.__tablename__)
-        and not db_session.query(Weather).count() == 0
-    ):
-        print("Table exists and contains values, skipping seed")
-        return
+    weather_response = weather_df.to_sql(  # weather first b/c of routemodel fkey
+        name="weather",
+        con=engine,
+        schema="public",
+        if_exists="replace",
+        index=False,
+        method="multi",
+    )
+    if weather_df.shape[0] != weather_response:
+        raise SystemError("weather insertion failed")
 
-    Base.metadata.create_all(bind=engine, tables=[Weather.__table__])
+    routemodel_response = routemodel_df.to_sql(
+        name="routemodel",
+        con=engine,
+        schema="public",
+        if_exists="replace",
+        index=False,
+        method="multi",
+    )
+    if routemodel_df.shape[0] != routemodel_response:
+        raise SystemError("dataframe insertion failed")
 
-    # Add Weather Table
-    df = pd.read_csv(filename)
-    for row in df.itertuples():
-        location = Weather(
-            id=row.Index + 1,
-            lat=check_null(row.lat),
-            lon=check_null(row.lon),
-            temperature=check_null(row.temperature),
-            humidity=check_null(row.humidity),
-            wind_speed=check_null(row.wind_speed),
-            wind_direction=check_null(row.wind_direction),
-            cloud_cover=check_null(row.cloud_cover),
-        )
-        db_session.add(location)
-    db_session.commit()
+    print("weather and routemodel dataframe insertion success")
 
-    routemodel = db_session.query(RouteModel).order_by(RouteModel.id)
-    # Get the geopy_dist for the last point in route model
-    last_point = routemodel[-1]
-    last_point_dist = last_point.geopy_elapsed_dist_m
 
-    print("Furthest race point is {} meters away".format(last_point_dist))
-    for i in range(int(last_point_dist // WEATHER_RANGE) + 1):
-        start = i * WEATHER_RANGE
-        end = (i + 1) * WEATHER_RANGE
+def main(db_user, db_password, db_host, db_name, API_KEY="", WEATHER_RANGE=30000):
+    date = datetime.now().strftime("%Y%m%d")
+    file_hash = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
-        print("Updated ranges", start, end, "with weather id", i + 1)
+    print("1) Retrieving routemodel data...")
+    routemodel_df = get_routemodel_df(db_user, db_password, db_host, db_name)
 
-        db_session.query(RouteModel).filter(
-            RouteModel.geopy_elapsed_dist_m >= start,
-            RouteModel.geopy_elapsed_dist_m < end,
-        ).update({"weather_id": i + 1}, synchronize_session=False)
+    print("2) Calculating weather data...")
+    routemodel_df, weather_df = create_weather_update_routemodel(
+        routemodel_df, API_KEY, WEATHER_RANGE
+    )
 
-    db_session.commit()
+    print(
+        f"3) Saving data as weather-{date}-{file_hash}.csv and routemodel-{date}-{file_hash}.csv ..."
+    )
+    weather_df.to_csv(f"./weather-{date}-{file_hash}.csv")
+    routemodel_df.to_csv(f"./routemodel-{date}-{file_hash}.csv")
+
+    print("4) Updating database...")
+    update_database(routemodel_df, weather_df, db_user, db_password, db_host, db_name)
 
 
 if __name__ == "__main__":
-    weather_csv_filepath = normpath(
-        abspath(join(dirname(__file__), "..", "data", "weather.csv"))
-    )
-
-    if not os.path.exists(weather_csv_filepath):
-        # We'll read from the database to get the lat/lon values
-        df = weather_api_to_df()
-        df.to_csv(weather_csv_filepath)
-    # After generating a csv of the weather data, we'll read from it to generate the Weather table, this allows us to reseed the Weather data without repeatedly using API calls
-    seed_from_csv(weather_csv_filepath)
-    print("Success!")
+    db_user = ""
+    db_password = ""
+    db_host = ""
+    db_name = ""
+    API_KEY = ""
+    WEATHER_RANGE = 30000
+    main(db_user, db_password, db_host, db_name, API_KEY, WEATHER_RANGE)
