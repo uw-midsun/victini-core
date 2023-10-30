@@ -48,7 +48,9 @@ def get_routemodel_df(db_user, db_password, db_host, db_name):
 
     if not inspect(engine).has_table("routemodel"):
         raise SystemError("routemodel table does not exist in database")
-    routemodel_df = pd.read_sql_query(sql="SELECT * FROM routemodel", con=engine)
+    routemodel_df = pd.read_sql_query(
+        sql="SELECT * FROM routemodel ORDER BY ASC id", con=engine
+    )
     return routemodel_df
 
 
