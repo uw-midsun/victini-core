@@ -46,7 +46,7 @@ def update_weather(db_user, db_password, db_host, db_name, API_KEY, weather_row_
     if not inspect(engine).has_table("weather"):
         raise SystemError("weather table does not exist in database")
     weather_df = pd.read_sql_query(
-        sql="SELECT * FROM weather ORDER BY ASC id", con=engine
+        sql="SELECT * FROM weather ORDER BY id ASC", con=engine
     )
     weather_df.index += 1  # Make it 1-indexed
     weather_df_len = len(weather_df) + 1

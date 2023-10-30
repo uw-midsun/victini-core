@@ -72,7 +72,7 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
     df.index += 1  # Making table 1-indexed
     if inspect(engine).has_table("routemodel"):
         row_len = pd.read_sql_query(
-            sql="SELECT COUNT(*) FROM routemodel ORDER BY ASC id", con=engine
+            sql="SELECT COUNT(*) FROM routemodel ORDER BY id ASC", con=engine
         )
         df.index += row_len.iloc[0, 0]
 
