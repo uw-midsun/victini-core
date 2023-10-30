@@ -62,6 +62,7 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
     df = pd.read_csv(file)
     df.fillna(np.nan).replace([np.nan], [None])
     df = df.drop(columns=["Unnamed: 0"])
+    df.index.name = "id"
     # df = df.head(10) # For testing purposes
 
     engine = create_engine(

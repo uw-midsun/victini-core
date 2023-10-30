@@ -77,7 +77,7 @@ def create_weather_update_routemodel(routemodel_df, API_KEY, WEATHER_RANGE):
             }
             weather_df_rows.append(data)
             weather_idx = weather_fkey_index
-        routemodel_df.at[row.index - 1, "weather_id"] = weather_idx
+        routemodel_df.at[row.id - 1, "weather_id"] = weather_idx
 
     weather_df = pd.DataFrame(weather_df_rows)
     weather_df.index += 1  # Make it 1-indexed
