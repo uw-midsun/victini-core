@@ -1,7 +1,18 @@
-from database import db_session, seed_from_csv
+from database import db_session, reset_tables
 from flask import Flask
 from flask_graphql import GraphQLView
 from schema import schema
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument(
+    "--reset-tables",
+    type=bool,
+    help="If you want to reset all the tables managed by this service",
+    required=False,
+)
+args = parser.parse_args()
+args = vars(args)
 
 app = Flask(__name__)
 app.debug = True
@@ -18,5 +29,6 @@ def shutdown_session(exception=None):
 
 
 if __name__ == "__main__":
-    seed_from_csv("../uw_sample_gpx.csv")
-    app.run()
+    if args["reset_tables"]:
+        reset_tables()
+    app.run(debug=False, host="0.0.0.0", port=5001)
