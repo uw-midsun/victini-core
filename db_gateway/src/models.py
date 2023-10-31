@@ -1,5 +1,7 @@
 from database import Base
-from sqlalchemy import Column, Float, Integer, String, ForeignKey
+from geoalchemy2 import Geometry
+from geoalchemy2.comparator import Comparator
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
 
 
 class RouteModel(Base):
@@ -7,6 +9,7 @@ class RouteModel(Base):
     id = Column(Integer, primary_key=True)
     lat = Column(Float)
     lon = Column(Float)
+    geo = Column(Geometry(geometry_type="POINT", srid=4326))
     type = Column(String, default=None)
     step = Column(String, default=None)
     next_turn = Column(String, default=None)
