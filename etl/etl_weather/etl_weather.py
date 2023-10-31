@@ -2,9 +2,11 @@ import random
 import string
 from datetime import datetime
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import requests
+from geoalchemy2 import Geometry
 from sqlalchemy import create_engine, inspect
 
 API_BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
@@ -41,29 +43,29 @@ def get_weather(lat, long, API_KEY):
     return weather_dict
 
 
-def get_routemodel_df(db_user, db_password, db_host, db_name):
+def get_routemodel_gdf(db_user, db_password, db_host, db_name):
     engine = create_engine(
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
 
     if not inspect(engine).has_table("routemodel"):
         raise SystemError("routemodel table does not exist in database")
-    routemodel_df = pd.read_sql_query(
-        sql="SELECT * FROM routemodel ORDER BY id ASC", con=engine
+    routemodel_gdf = gpd.GeoDataFrame(
+        pd.read_sql_query(sql="SELECT * FROM routemodel ORDER BY id ASC", con=engine)
     )
-    return routemodel_df
+    return routemodel_gdf
 
 
-def create_weather_update_routemodel(routemodel_df, API_KEY, WEATHER_RANGE):
+def create_weather_update_routemodel(routemodel_gdf, API_KEY, WEATHER_RANGE):
     weather_idx = 0
     weather_df_rows = []
-    routemodel_df["weather_id"] = (
-        pd.to_numeric(routemodel_df["weather_id"], errors="coerce")
+    routemodel_gdf["weather_id"] = (
+        pd.to_numeric(routemodel_gdf["weather_id"], errors="coerce")
         .fillna(0)
         .astype(int)
     )
 
-    for row in routemodel_df.itertuples():
+    for row in routemodel_gdf.itertuples():
         weather_fkey_index = int((row.geopy_elapsed_dist_m // WEATHER_RANGE) + 1)
         if weather_fkey_index > weather_idx:
             weather_data = get_weather(row.lat, row.lon, API_KEY)
@@ -79,14 +81,14 @@ def create_weather_update_routemodel(routemodel_df, API_KEY, WEATHER_RANGE):
             }
             weather_df_rows.append(data)
             weather_idx = weather_fkey_index
-        routemodel_df.at[row.id - 1, "weather_id"] = weather_idx
+        routemodel_gdf.at[row.id - 1, "weather_id"] = weather_idx
 
     weather_df = pd.DataFrame(weather_df_rows)
     weather_df.index += 1  # Make it 1-indexed
-    return routemodel_df, weather_df
+    return routemodel_gdf, weather_df
 
 
-def update_database(routemodel_df, weather_df, db_user, db_password, db_host, db_name):
+def update_database(routemodel_gdf, weather_df, db_user, db_password, db_host, db_name):
     engine = create_engine(
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
@@ -102,15 +104,16 @@ def update_database(routemodel_df, weather_df, db_user, db_password, db_host, db
     if weather_df.shape[0] != weather_response:
         raise SystemError("weather insertion failed")
 
-    routemodel_response = routemodel_df.to_sql(
+    routemodel_response = routemodel_gdf.to_sql(
         name="routemodel",
         con=engine,
         schema="public",
         if_exists="replace",
         index=False,
         method="multi",
+        dtype={"geo": Geometry("POINT", srid=4326)},
     )
-    if routemodel_df.shape[0] != routemodel_response:
+    if routemodel_gdf.shape[0] != routemodel_response:
         raise SystemError("dataframe insertion failed")
 
     print("weather and routemodel dataframe insertion success")
@@ -121,21 +124,21 @@ def main(db_user, db_password, db_host, db_name, API_KEY="", WEATHER_RANGE=30000
     file_hash = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
     print("1) Retrieving routemodel data...")
-    routemodel_df = get_routemodel_df(db_user, db_password, db_host, db_name)
+    routemodel_gdf = get_routemodel_gdf(db_user, db_password, db_host, db_name)
 
     print("2) Calculating weather data...")
-    routemodel_df, weather_df = create_weather_update_routemodel(
-        routemodel_df, API_KEY, WEATHER_RANGE
+    routemodel_gdf, weather_df = create_weather_update_routemodel(
+        routemodel_gdf, API_KEY, WEATHER_RANGE
     )
 
     print(
         f"3) Saving data as weather-{date}-{file_hash}.csv and routemodel-{date}-{file_hash}.csv ..."
     )
     weather_df.to_csv(f"./weather-{date}-{file_hash}.csv")
-    routemodel_df.to_csv(f"./routemodel-{date}-{file_hash}.csv")
+    routemodel_gdf.to_csv(f"./routemodel-{date}-{file_hash}.csv")
 
     print("4) Updating database...")
-    update_database(routemodel_df, weather_df, db_user, db_password, db_host, db_name)
+    update_database(routemodel_gdf, weather_df, db_user, db_password, db_host, db_name)
 
 
 if __name__ == "__main__":

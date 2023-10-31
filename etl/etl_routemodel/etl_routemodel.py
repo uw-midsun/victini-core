@@ -1,29 +1,36 @@
 import json
 from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
+from geoalchemy2 import Geometry
 from geopy import distance
 from sqlalchemy import create_engine, inspect
 
 
-def gpx_json_to_df(json_filepath):
+def gpx_json_to_gdf(json_filepath):
     file = Path(json_filepath)
     if not file.is_file():
         raise FileNotFoundError("No file exists at the location specified")
 
-    df_rows = []
+    gdf_rows = []
     with open(json_filepath, "r") as f:
         gpx = json.load(f)
     for point in gpx["points"]:
+        lon = point.get("lng", 0)
+        lat = point.get("lat", None)
         data = {
-            "lon": point.get("lng", None),
-            "lat": point.get("lat", None),
+            "lon": lon,
+            "lat": lat,
+            "geo": "POINT({} {})".format(lon, lat),
             "type": point.get("type", None),
+            "street_name": None,
             "step": point.get("step", None),
             "next_turn": point.get("nextturn", None),
             "dir": None,
+            "speed_limit_km_per_h": None,
             "gpx_dist_to_next_waypoint_m": None,
             "gpx_elapsed_dist_m": None,
             "geopy_elapsed_dist_m": 0,
@@ -37,8 +44,8 @@ def gpx_json_to_df(json_filepath):
         if dist := point.get("dist", None):
             data["gpx_dist_to_next_waypoint_m"] = dist["val"]
             data["gpx_elapsed_dist_m"] = dist["total"] - dist["val"]
-        if len(df_rows) > 0:
-            prev = df_rows[-1]
+        if len(gdf_rows) > 0:
+            prev = gdf_rows[-1]
             prev_coor = (prev["lat"], prev["lon"])
             curr_coor = (data["lat"], data["lon"])
             dist = distance.great_circle(prev_coor, curr_coor).m
@@ -46,12 +53,11 @@ def gpx_json_to_df(json_filepath):
             data["geopy_elapsed_dist_m"] = prev["geopy_elapsed_dist_m"] + dist
         # if time := point.get("timeto", None):
         #     data["time_to_next_s"] = time["val"]
-        df_rows.append(data)
+        gdf_rows.append(data)
 
-    df = pd.DataFrame(df_rows)
+    gdf = gpd.GeoDataFrame(gdf_rows)
     csv_filepath = file.with_suffix(".csv")
-    if not csv_filepath.is_file():
-        df.to_csv(csv_filepath)
+    gdf.to_csv(csv_filepath)
     return csv_filepath
 
 
@@ -59,32 +65,31 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
     file = Path(csv_filepath)
     if not file.is_file():
         raise FileNotFoundError("No file exists at the location specified")
-    df = pd.read_csv(file)
-    df.fillna(np.nan).replace([np.nan], [None])
-    df = df.drop(columns=["Unnamed: 0"])
-    df.index.name = "id"
-    # df = df.head(10) # For testing purposes
+    gdf = gpd.GeoDataFrame(pd.read_csv(file))
+    gdf.fillna(np.nan).replace([np.nan], [None])
+    gdf = gdf.drop(columns=["Unnamed: 0"])
+    gdf.index.name = "id"
+    # gdf = gdf.head(10) # For testing purposes
 
     engine = create_engine(
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
 
-    df.index += 1  # Making table 1-indexed
+    gdf.index += 1  # Making table 1-indexed
     if inspect(engine).has_table("routemodel"):
-        row_len = pd.read_sql_query(
-            sql="SELECT COUNT(*) FROM routemodel ORDER BY id ASC", con=engine
-        )
-        df.index += row_len.iloc[0, 0]
+        row_len = pd.read_sql_query(sql="SELECT COUNT(*) FROM routemodel", con=engine)
+        gdf.index += row_len.iloc[0, 0]
 
-    response = df.to_sql(
+    response = gdf.to_sql(
         name="routemodel",
         con=engine,
         schema="public",
         if_exists="append",
         index=True,
         method="multi",
+        dtype={"geo": Geometry("POINT", srid=4326)},
     )
-    if df.shape[0] != response:
+    if gdf.shape[0] != response:
         raise SystemError("dataframe insertion failed")
     else:
         print("routemodel dataframe insertion success")
@@ -92,7 +97,7 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
 
 def main(gpx_json_filepath, db_user, db_password, db_host, db_name):
     print("1) Parsing gpx json format to csv format...")
-    csv_filepath = gpx_json_to_df(gpx_json_filepath)
+    csv_filepath = gpx_json_to_gdf(gpx_json_filepath)
 
     print("2) Seeding routemodel csv into database...")
     seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name)
