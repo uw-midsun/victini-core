@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-from geoalchemy2 import Geometry
 from bs4 import BeautifulSoup
+from geoalchemy2 import Geometry
 from geopy import distance
 from sqlalchemy import create_engine, inspect
 
