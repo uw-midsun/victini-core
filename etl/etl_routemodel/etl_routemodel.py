@@ -7,7 +7,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from geoalchemy2 import Geometry
 from geopy import distance
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, String
 
 
 def gpx_json_to_gdf(json_filepath):
@@ -87,7 +87,7 @@ def seed_from_csv(csv_filepath, db_user, db_password, db_host, db_name):
         if_exists="append",
         index=True,
         method="multi",
-        dtype={"geo": Geometry("POINT", srid=4326)},
+        dtype={"geo": Geometry("POINT", srid=4326), "street_name": String},
     )
     if gdf.shape[0] != response:
         raise SystemError("dataframe insertion failed")

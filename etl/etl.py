@@ -6,6 +6,7 @@ import questionary
 from etl_drop_tables.etl_drop_tables import main as run_drop_tables_etl
 from etl_routemodel.etl_routemodel import main as run_routemodel_etl
 from etl_weather.etl_weather import main as run_weather_etl
+from etl_speed_limit.etl_speed_limit import main as run_speed_limit_etl
 from termcolor import colored
 
 
@@ -57,6 +58,25 @@ def cmd_routemodel(db_user, db_password, db_host, db_name):
     else:
         run_routemodel_etl(gpx_json_filepath, db_user, db_password, db_host, db_name)
         print(colored("routemodel ETL success", "green"))
+
+
+def cmd_streetname_speedlimit(db_user, db_password, db_host, db_name):
+    answers = questionary.form(
+        bingmaps_api_key=questionary.password("Bing Maps API key", default=""),
+        confirm=questionary.confirm(
+            "Confirm street_name/speed_limit ETL operation",
+            default=False,
+            auto_enter=False,
+        ),
+    ).ask()
+    bingmaps_api_key = answers["bingmaps_api_key"]
+    confirm = answers["confirm"]
+
+    if not confirm:
+        print(colored("streetname/speedlimit ETL cancelled", "red"))
+    else:
+        run_speed_limit_etl(db_user, db_password, db_host, db_name, bingmaps_api_key)
+        print(colored("streetname/speedlimit ETL success", "green"))
 
 
 def cmd_weather(db_user, db_password, db_host, db_name):
@@ -125,7 +145,8 @@ if __name__ == "__main__":
         )
     )
     etl_name = questionary.select(
-        "Select ETL operation", choices=["routemodel", "weather", "drop_tables"]
+        "Select ETL operation",
+        choices=["routemodel", "weather", "speed_limit/street_names", "drop_tables"],
     ).ask()
 
     auth, db_user, db_password, db_host, db_name = validate_db_creds()
@@ -139,3 +160,5 @@ if __name__ == "__main__":
         cmd_weather(db_user, db_password, db_host, db_name)
     elif etl_name == "drop_tables":
         cmd_drop_tables(db_user, db_password, db_host, db_name)
+    elif etl_name == "speed_limit/street_names":
+        cmd_streetname_speedlimit(db_user, db_password, db_host, db_name)
