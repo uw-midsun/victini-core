@@ -76,7 +76,6 @@ def closest_location():
     cur = conn.cursor()
     cur.execute(query)
     location = dict(zip(("id", "lat", "lon"), cur.fetchone()))
-    print(location)
     cur.close()
     postgres_pool.putconn(conn)
     return location
