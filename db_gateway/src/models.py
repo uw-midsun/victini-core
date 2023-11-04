@@ -23,6 +23,14 @@ class RouteModel(Base):
     weather_id = Column(Integer, ForeignKey("weather.id"))
 
 
+class LocationService(Base):
+    __tablename__ = "location_service"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    lon = Column(Float)
+    geo = Column(Geometry(geometry_type="POINT", srid=4326))
+
+
 class Weather(Base):
     __tablename__ = "weather"
     id = Column(Integer, primary_key=True)
