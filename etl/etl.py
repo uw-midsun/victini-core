@@ -172,7 +172,7 @@ if __name__ == "__main__":
         "Select ETL operation",
         choices=[
             "routemodel",
-            "cmd_location_service",
+            "location_service",
             "weather",
             "speed_limit/street_names",
             "drop_tables",
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 
     if etl_name == "routemodel":
         cmd_routemodel(db_user, db_password, db_host, db_name)
-    elif etl_name == "cmd_location_service":
+    elif etl_name == "location_service":
         cmd_location_service(db_user, db_password, db_host, db_name)
     elif etl_name == "weather":
         cmd_weather(db_user, db_password, db_host, db_name)

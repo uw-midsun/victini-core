@@ -20,7 +20,7 @@ class RouteModel(Base):
     gpx_elapsed_dist_m = Column(Float)
     geopy_elapsed_dist_m = Column(Float)
     geopy_dist_from_last_m = Column(Float)
-    weather_id = Column(Integer, ForeignKey("weather.id"))
+    weather_id = Column(Integer)
 
 
 class LocationService(Base):
