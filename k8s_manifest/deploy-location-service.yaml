@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location-service
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: location-service
+  template:
+    metadata:
+      labels:
+        app: location-service
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: location-service
+          image: uwmidsun.azurecr.io/location-service:2023-11-04
+          ports:
+            - containerPort: 80
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1G
+            limits:
+              cpu: "2"
+              memory: 2G
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: location-service
+  namespace: dev
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 80
+      name: port80
+      port: 80
+      protocol: TCP
+    - targetPort: 5000
+      name: port5000
+      port: 5000
+      protocol: TCP
+  selector:
+    app: location-service
