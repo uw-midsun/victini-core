@@ -1,81 +1,35 @@
 import json
 import os
-from argparse import ArgumentParser
 
-import pandas as pd
 from dotenv import load_dotenv
 from flask import Flask, request
-from flask_sqlalchemy import SQLAlchemy
-from geoalchemy2 import Geometry
-from geoalchemy2.comparator import Comparator
-from sqlalchemy import asc, func
+from psycopg2 import pool as psycopg2_pool
 
 load_dotenv()
-DATABASE_URI = os.environ.get("DATABASE_URI")
+REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "False").lower() in ("true", "1", "t")
 AUTH_KEY = os.environ.get("AUTH_KEY")
-
-
-parser = ArgumentParser()
-parser.add_argument(
-    "--create-table",
-    type=bool,
-    help="If you want a table to be created in the database",
-    required=False,
-)
-parser.add_argument(
-    "--seed-filename",
-    type=str,
-    help="String of the filepath of the csv file if you want to seed the database with the csv file contents",
-    required=False,
-)
-args = parser.parse_args()
-args = vars(args)
+DB_HOST = os.environ.get("DB_HOST")
+DB_PORT = os.environ.get("DB_PORT")
+DB_NAME = os.environ.get("DB_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
 
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-app.config["SQLALCHEMY_ECHO"] = False
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
-app.app_context().push()
-
-
-class Location(db.Model):
-    __tablename__ = "location_test"  # Change table name
-
-    id = db.Column(db.Integer, primary_key=True)
-    lat = db.Column(db.Float)
-    lon = db.Column(db.Float)
-    geo = db.Column(Geometry(geometry_type="POINT", srid=4326))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "lat": self.lat,
-            "lon": self.lon,
-        }
-
-    @staticmethod
-    def create(lat, lon):
-        geo = "POINT({} {})".format(lon, lat)  # Note that postgis is (lon, lat)
-        location = Location(lat=lat, lon=lon, geo=geo)
-        db.session.add(location)
-        db.session.commit()
-
-    @staticmethod
-    def seed_from_csv(filename):
-        df = pd.read_csv(filename)
-        db.session.query(Location).delete()
-        for row in df.itertuples():
-            geo = "POINT({} {})".format(
-                row.lon, row.lat
-            )  # Note that postgis is (lon, lat)
-            location = Location(id=row.Index + 1, lat=row.lat, lon=row.lon, geo=geo)
-            db.session.add(location)
-        db.session.commit()
+postgres_pool = psycopg2_pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    host=DB_HOST,
+    port=DB_PORT,
+    database=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD,
+)
 
 
 def authorized(auth_key):
+    if not REQUIRE_AUTH:
+        return True
     return auth_key == AUTH_KEY
 
 
@@ -84,14 +38,21 @@ def index():
     return "location service"
 
 
-@app.route("/all", methods=["GET"])
+@app.route("/all", methods=["GET", "POST"])
 def all():
     body = json.loads(request.data)
     auth_key = body.get("auth_key", None)
     if not authorized(auth_key):
         return "Not authorized", 401
-    locations = db.session.query(Location).order_by(asc(Location.id))
-    return [l.to_dict() for l in locations]
+
+    query = "SELECT id, lat, lon FROM location_service;"
+    conn = postgres_pool.getconn()
+    cur = conn.cursor()
+    cur.execute(query)
+    locations = [dict(zip(("id", "lat", "lon"), values)) for values in cur.fetchall()]
+    cur.close()
+    postgres_pool.putconn(conn)
+    return locations
 
 
 @app.route("/location", methods=["POST"])
@@ -104,27 +65,21 @@ def closest_location():
         return "Not authorized", 401
     if lat is None or lon is None:
         return "Invalid request body", 400
-    location = (
-        db.session.query(Location)
-        .order_by(
-            Comparator.distance_centroid(
-                Location.geo,
-                func.Geometry(
-                    func.ST_GeographyFromText(
-                        "POINT({} {})".format(lon, lat)
-                    )  # Note that postgis is (lon, lat)
-                ),
-            )
-        )
-        .limit(1)
-        .first()
-    )
-    return location.to_dict()
+
+    query = f"""
+    SELECT *
+    FROM location_service 
+    ORDER BY location_service.geo <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)
+    LIMIT 1;
+    """
+    conn = postgres_pool.getconn()
+    cur = conn.cursor()
+    cur.execute(query)
+    location = dict(zip(("id", "lat", "lon"), cur.fetchone()))
+    cur.close()
+    postgres_pool.putconn(conn)
+    return location
 
 
 if __name__ == "__main__":
-    if args["create_table"]:
-        db.create_all()
-    if args["seed_filename"]:
-        Location.seed_from_csv(args["seed_filename"])
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

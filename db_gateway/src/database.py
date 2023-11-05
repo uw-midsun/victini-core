@@ -25,7 +25,7 @@ def check_null(value):
 
 
 def reset_tables():
-    from models import RouteModel, Weather
+    from models import RouteModel, Weather, LocationService
 
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)

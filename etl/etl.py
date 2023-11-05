@@ -7,6 +7,7 @@ from etl_drop_tables.etl_drop_tables import main as run_drop_tables_etl
 from etl_routemodel.etl_routemodel import main as run_routemodel_etl
 from etl_weather.etl_weather import main as run_weather_etl
 from etl_speed_limit.etl_speed_limit import main as run_speed_limit_etl
+from etl_location_service.etl_location_service import main as run_location_service_etl
 from termcolor import colored
 
 
@@ -60,23 +61,27 @@ def cmd_routemodel(db_user, db_password, db_host, db_name):
         print(colored("routemodel ETL success", "green"))
 
 
-def cmd_streetname_speedlimit(db_user, db_password, db_host, db_name):
+def cmd_location_service(db_user, db_password, db_host, db_name):
     answers = questionary.form(
-        bingmaps_api_key=questionary.password("Bing Maps API key", default=""),
+        csv_filepath=questionary.path(
+            "Path to data (CSV file)",
+            default="",
+            validate=lambda p: validate_path(p, ".csv"),
+        ),
         confirm=questionary.confirm(
-            "Confirm street_name/speed_limit ETL operation",
+            "Confirm routemodel ETL operation",
             default=False,
             auto_enter=False,
         ),
     ).ask()
-    bingmaps_api_key = answers["bingmaps_api_key"]
+    csv_filepath = answers["csv_filepath"]
     confirm = answers["confirm"]
 
     if not confirm:
-        print(colored("streetname/speedlimit ETL cancelled", "red"))
+        print(colored("location_service ETL cancelled", "red"))
     else:
-        run_speed_limit_etl(db_user, db_password, db_host, db_name, bingmaps_api_key)
-        print(colored("streetname/speedlimit ETL success", "green"))
+        run_location_service_etl(csv_filepath, db_user, db_password, db_host, db_name)
+        print(colored("location_service ETL success", "green"))
 
 
 def cmd_weather(db_user, db_password, db_host, db_name):
@@ -109,6 +114,25 @@ def cmd_weather(db_user, db_password, db_host, db_name):
             int(weather_range),
         )
         print(colored("weather ETL success", "green"))
+
+
+def cmd_streetname_speedlimit(db_user, db_password, db_host, db_name):
+    answers = questionary.form(
+        bingmaps_api_key=questionary.password("Bing Maps API key", default=""),
+        confirm=questionary.confirm(
+            "Confirm street_name/speed_limit ETL operation",
+            default=False,
+            auto_enter=False,
+        ),
+    ).ask()
+    bingmaps_api_key = answers["bingmaps_api_key"]
+    confirm = answers["confirm"]
+
+    if not confirm:
+        print(colored("streetname/speedlimit ETL cancelled", "red"))
+    else:
+        run_speed_limit_etl(db_user, db_password, db_host, db_name, bingmaps_api_key)
+        print(colored("streetname/speedlimit ETL success", "green"))
 
 
 def cmd_drop_tables(db_user, db_password, db_host, db_name):
@@ -146,7 +170,13 @@ if __name__ == "__main__":
     )
     etl_name = questionary.select(
         "Select ETL operation",
-        choices=["routemodel", "weather", "speed_limit/street_names", "drop_tables"],
+        choices=[
+            "routemodel",
+            "location_service",
+            "weather",
+            "speed_limit/street_names",
+            "drop_tables",
+        ],
     ).ask()
 
     auth, db_user, db_password, db_host, db_name = validate_db_creds()
@@ -156,9 +186,11 @@ if __name__ == "__main__":
 
     if etl_name == "routemodel":
         cmd_routemodel(db_user, db_password, db_host, db_name)
+    elif etl_name == "location_service":
+        cmd_location_service(db_user, db_password, db_host, db_name)
     elif etl_name == "weather":
         cmd_weather(db_user, db_password, db_host, db_name)
-    elif etl_name == "drop_tables":
-        cmd_drop_tables(db_user, db_password, db_host, db_name)
     elif etl_name == "speed_limit/street_names":
         cmd_streetname_speedlimit(db_user, db_password, db_host, db_name)
+    elif etl_name == "drop_tables":
+        cmd_drop_tables(db_user, db_password, db_host, db_name)
