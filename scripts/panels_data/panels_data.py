@@ -2,6 +2,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
+# loads variables from .env file that contains the information required to access the database
 load_dotenv()
 
 hostname = os.getenv("DB_HOSTNAME")
@@ -10,6 +11,7 @@ username = os.getenv("DB_USERNAME")
 pw = os.getenv("DB_PASSWORD")
 port_id = os.getenv("DB_PORT")
 
+# connect using psycopg2 with host name, database name, username, password, and port
 conn = psycopg2.connect(
     host = hostname,
     dbname = database,
@@ -18,6 +20,7 @@ conn = psycopg2.connect(
     port = port_id
 )
 
+# deletes table if it exists to create a new one
 cur = conn.cursor()
 cur.execute("DROP TABLE IF EXISTS panels_data")
 
@@ -31,6 +34,7 @@ create_table = '''CREATE TABLE IF NOT EXISTS panels_data (
                 )'''
 cur.execute(create_table)
 
+# inserts multiple records
 insert_table = "INSERT INTO panels_data(name, stack, efficiency, num_panels, tilt) VALUES (%s, %s, %s, %s, %s)"
 insert_values = [("Back Left 1", 7, 0.25, 28, -8.28),
                  ("Back Right 1", 8, 0.25, 28, -8.28),
@@ -49,6 +53,7 @@ insert_values = [("Back Left 1", 7, 0.25, 28, -8.28),
 for values in insert_values:
     cur.execute(insert_table, values)
 
+# close connection
 cur.close()
 conn.commit()
 conn.close()
