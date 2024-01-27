@@ -16,3 +16,9 @@ Fields and values can be changed, added, or deleted by editing the script
 
 CREATE TABLE documentation: https://www.postgresql.org/docs/current/sql-createtable.html
 INSERT documentation: https://www.postgresql.org/docs/current/sql-insert.html
+----------------------------------------------------------------
+To do:
+Add solar panel dimensions (width and height)
+
+
+
