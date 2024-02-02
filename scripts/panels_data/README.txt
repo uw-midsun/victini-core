@@ -10,7 +10,7 @@ stack - which stack the panel belongs to
 efficiency - how efficient the panels are
   *currently set to 0.25, change if necessary
 num_panels - how many panels it is made up of
-title  - degree from zenith
+tilt - degree from zenith
 
 Fields and values can be changed, added, or deleted by editing the script
 
