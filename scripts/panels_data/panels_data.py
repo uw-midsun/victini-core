@@ -1,6 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float
+from sqlalchemy import create_engine, MetaData, Column, Integer, String, Float, Table
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.engine import URL
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 Base = declarative_base()
 
@@ -23,12 +26,28 @@ def create_panel_table(db_user, db_password, db_host, db_name):
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}/{db_name}"
     )
 
-    # creates corresponding tables
-    Base.metadata.create_all(engine)
-
     # create session
     Session = sessionmaker(bind=engine)
     session = Session()
+
+    # used to check if table exists
+    metadata = MetaData()
+    panel_table = Table(
+        "panels_data",
+        metadata,
+        Column("id", Integer(), primary_key=True, autoincrement=True),
+        Column("name", String(100), nullable=False, unique=True),
+        Column("stack", Integer(), nullable=False),
+        Column("efficiency", Float(), nullable=False),
+        Column("num_panels", Integer(), nullable=False),
+        Column("tilt", Float(), nullable=False),
+    )
+
+    # drop if exists
+    panel_table.drop(engine, checkfirst=True)
+
+    # create table
+    metadata.create_all(engine, checkfirst=True)
 
     # setting entry values
     panel_data = [
@@ -136,8 +155,8 @@ def main(db_user, db_password, db_host, db_name):
 
 # allows it to be run as a script
 if __name__ == "__main__":
-    db_user = ""
-    db_password = ""
-    db_host = ""
-    db_name = ""
+    db_user = os.getenv("DB_USERNAME")
+    db_password = os.getenv("DB_PASSWORD")
+    db_host = os.getenv("DB_HOSTNAME")
+    db_name = os.getenv("DB_NAME")
     main(db_user, db_password, db_host, db_name)
