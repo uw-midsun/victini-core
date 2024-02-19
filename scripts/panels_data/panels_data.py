@@ -46,7 +46,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
         Column("tilt", Float(), nullable=False),
         Column("width", Float(), nullable=False),
         Column("height", Float(), nullable=False),
-        Column("area", Float(), nullable=False)
+        Column("area", Float(), nullable=False),
     )
     panel_area = 0.0153
 
@@ -66,7 +66,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -8.28,
             "width": 0.5,
             "height": 0.875,
-            "area": 28*panel_area
+            "area": 28 * panel_area,
         },
         {
             "name": "Back Right 1",
@@ -76,7 +76,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -8.28,
             "width": 0.5,
             "height": 0.875,
-            "area": 28*panel_area
+            "area": 28 * panel_area,
         },
         {
             "name": "Back Middle 1",
@@ -86,7 +86,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -8.06,
             "width": 0.25,
             "height": 0.75,
-            "area": 12*panel_area
+            "area": 12 * panel_area,
         },
         {
             "name": "Back Left 2",
@@ -96,7 +96,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -5.21,
             "width": 0.5,
             "height": 0.875,
-            "area": 28*panel_area
+            "area": 28 * panel_area,
         },
         {
             "name": "Back Right 2",
@@ -106,7 +106,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -5.21,
             "width": 0.5,
             "height": 0.875,
-            "area": 28*panel_area
+            "area": 28 * panel_area,
         },
         {
             "name": "Back Middle 2",
@@ -116,7 +116,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -5.21,
             "width": 0.375,
             "height": 0.875,
-            "area": 21*panel_area
+            "area": 21 * panel_area,
         },
         {
             "name": "Middle Left 1",
@@ -126,7 +126,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -2.14,
             "width": 0.375,
             "height": 0.75,
-            "area": 18*panel_area
+            "area": 18 * panel_area,
         },
         {
             "name": "Middle Right 1",
@@ -136,7 +136,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -2.14,
             "width": 0.375,
             "height": 0.75,
-            "area": 18*panel_area
+            "area": 18 * panel_area,
         },
         {
             "name": "Middle Left 2",
@@ -146,7 +146,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 0.77,
             "width": 0.25,
             "height": 0.625,
-            "area": 10*panel_area
+            "area": 10 * panel_area,
         },
         {
             "name": "Middle Right 2",
@@ -156,7 +156,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 0.77,
             "width": 0.25,
             "height": 0.625,
-            "area": 10*panel_area
+            "area": 10 * panel_area,
         },
         {
             "name": "Front Left",
@@ -166,7 +166,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 5.13,
             "width": 0.375,
             "height": 0.875,
-            "area": 21*panel_area
+            "area": 21 * panel_area,
         },
         {
             "name": "Front Right",
@@ -176,7 +176,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 5.13,
             "width": 0.375,
             "height": 0.875,
-            "area": 21*panel_area
+            "area": 21 * panel_area,
         },
         {
             "name": "Front Middle",
@@ -186,7 +186,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 8.75,
             "width": 0.5,
             "height": 0.5,
-            "area": 16*panel_area
+            "area": 16 * panel_area,
         },
     ]
     # unpacking each entry to create a Panel instance and adding to table
