@@ -86,7 +86,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": -8.06,
             "width": 0.25,
             "height": 0.5,
-            "area": 12 * panel_area,
+            "area": 8 * panel_area,
         },
         {
             "name": "Back Left 2",
@@ -186,7 +186,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "tilt": 8.75,
             "width": 0.125,
             "height": 0.75,
-            "area": 16 * panel_area,
+            "area": 5 * panel_area,
         },
         {
             "name": "Front Middle 2",
