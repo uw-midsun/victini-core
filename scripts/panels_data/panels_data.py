@@ -48,7 +48,7 @@ def create_panel_table(db_user, db_password, db_host, db_name):
         Column("height", Float(), nullable=False),
         Column("area", Float(), nullable=False),
     )
-    panel_area = 0.0153
+    panel_area = 0.015333
 
     # drop if exists
     panel_table.drop(engine, checkfirst=True)
@@ -80,13 +80,13 @@ def create_panel_table(db_user, db_password, db_host, db_name):
         },
         {
             "name": "Back Middle 1",
-            "stack": 3,
+            "stack": 6,
             "efficiency": 0.25,
-            "num_panels": 12,
+            "num_panels": 8,
             "tilt": -8.06,
             "width": 0.25,
-            "height": 0.75,
-            "area": 12 * panel_area,
+            "height": 0.5,
+            "area": 8 * panel_area,
         },
         {
             "name": "Back Left 2",
@@ -179,7 +179,17 @@ def create_panel_table(db_user, db_password, db_host, db_name):
             "area": 21 * panel_area,
         },
         {
-            "name": "Front Middle",
+            "name": "Front Middle 1",
+            "stack": 6,
+            "efficiency": 0.25,
+            "num_panels": 5,
+            "tilt": 8.75,
+            "width": 0.125,
+            "height": 0.75,
+            "area": 5 * panel_area,
+        },
+        {
+            "name": "Front Middle 2",
             "stack": 11,
             "efficiency": 0.25,
             "num_panels": 16,
