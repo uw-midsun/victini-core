@@ -59,6 +59,9 @@ def cmd_routemodel_import():
 
 def cmd_routemodel_construct():
     answers = questionary.form(
+        route_name=questionary.text(
+            'Name of route'
+        ),
         segment_data_filepath=questionary.path(
             "Path to segment data (json file)",
             default="",
@@ -66,9 +69,6 @@ def cmd_routemodel_construct():
         ),
         segment_order=questionary.text(
             "Order of track segments"
-        ),
-        route_name=questionary.text(
-            'Name of track'
         ),
         num_loops=questionary.text(
             "Number of loops"
