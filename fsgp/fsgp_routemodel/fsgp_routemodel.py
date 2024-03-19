@@ -5,6 +5,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, inspect, String
 import geopandas as gpd
 from geoalchemy2 import Geometry
+from geopy import distance
 
 def import_track_segments(track_data_filepath):
     file = Path(track_data_filepath)
@@ -47,7 +48,8 @@ def construct_route(segments_data_filepath, segment_order, num_loops, route_name
 
     segment_order = segment_order.split(' ')
     route_points = [segments[o] for o in segment_order]
-    route = [point for rps in route_points * num_loops for point in rps]
+    route_points = [point for rps in route_points * num_loops for point in rps]
+    route = {'points': route_points}
 
     file_path = file.parent / f"{route_name}.json"
     with open(file_path, 'w') as f:
@@ -55,9 +57,37 @@ def construct_route(segments_data_filepath, segment_order, num_loops, route_name
     return file_path
 
 
-# *In progress*
-# def track_json_to_csv(route_file_path):
-#     pass                                            
+def route_json_to_gdf(route_file_path):
+    file = Path(route_file_path)
+    if not file.is_file():
+        raise FileNotFoundError("No file exists at the location specified")
+    route_json = {}
+    gdf_rows = []
+    with open(file, 'r') as f:
+        route_json = json.load(f)
+    for point in route_json['points']:
+        lon = point.get("lng", 0)
+        lat = point.get("lat", 0)
+        data = {
+            "lon": lon,
+            "lat": lat,
+            "geo": "POINT({} {})".format(lon, lat),
+            "geopy_elapsed_dist_m": 0,
+            "geopy_dist_from_last_m": 0,
+        }
+        if len(gdf_rows) > 0:
+            prev = gdf_rows[-1]
+            prev_coor = (prev["lat"], prev["lon"])
+            curr_coor = (data["lat"], data["lon"])
+            dist = distance.great_circle(prev_coor, curr_coor).m
+            data["geopy_dist_from_last_m"] = dist
+            data["geopy_elapsed_dist_m"] = prev["geopy_elapsed_dist_m"] + dist
+        gdf_rows.append(data)
+
+    gdf = gpd.GeoDataFrame(gdf_rows)
+    csv_filepath = file.with_suffix(".csv")
+    gdf.to_csv(csv_filepath)
+    return csv_filepath
 
 
 # *In progress*, copied from etl routemodel
